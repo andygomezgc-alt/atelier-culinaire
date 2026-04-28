@@ -3,11 +3,10 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useLang } from "@/components/LangProvider";
 
-export default function LoginPage() {
-  const { t } = useLang();
+export default function RegisterPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,10 +16,28 @@ export default function LoginPage() {
     e.preventDefault();
     setBusy(true);
     setError("");
-    const res = await signIn("credentials", { email, password, redirect: false });
-    setBusy(false);
-    if (res?.ok) router.push("/dashboard");
-    else setError(t("login-error"));
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setError(d.error === "Already exists" ? "Ya existe una cuenta con ese email." :
+                 d.error === "Password too short" ? "La contraseña debe tener al menos 6 caracteres." :
+                 "No se pudo crear la cuenta.");
+        setBusy(false);
+        return;
+      }
+      const r = await signIn("credentials", { email, password, redirect: false });
+      setBusy(false);
+      if (r?.ok) router.push("/dashboard");
+      else setError("Cuenta creada, pero falló el login.");
+    } catch {
+      setBusy(false);
+      setError("Error de red.");
+    }
   }
 
   return (
@@ -28,34 +45,26 @@ export default function LoginPage() {
       <div className="login-card">
         <div className="login-brand">
           <div className="mark">A</div>
-          <div className="h">{t("login-title")}</div>
-          <div className="s">{t("login-sub")}</div>
+          <div className="h">Crear cuenta</div>
+          <div className="s">Únete al Ristorante Marche.</div>
         </div>
         <form onSubmit={onSubmit}>
           <div className="field">
-            <label>{t("login-email")}</label>
-            <input
-              className="input"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <label>Nombre</label>
+            <input className="input" required value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="field">
-            <label>{t("login-password")}</label>
-            <input
-              className="input"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <label>Email</label>
+            <input className="input" type="email" autoComplete="email" required
+              value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Contraseña</label>
+            <input className="input" type="password" autoComplete="new-password" required minLength={6}
+              value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
           <button type="submit" className="btn btn-accent" style={{ width: "100%" }} disabled={busy}>
-            {t("login-submit")}
+            {busy ? "Creando…" : "Crear cuenta"}
           </button>
           {error && <div className="login-error">{error}</div>}
         </form>
@@ -73,7 +82,7 @@ export default function LoginPage() {
         </button>
 
         <div className="auth-foot">
-          ¿No tenés cuenta? <Link href="/register">Crear una</Link>
+          ¿Ya tenés cuenta? <Link href="/login">Iniciar sesión</Link>
         </div>
       </div>
     </div>

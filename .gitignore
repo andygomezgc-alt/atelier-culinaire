@@ -8,3 +8,6 @@ prisma/migrations/dev*
 public/uploads/*
 !public/uploads/.gitkeep
 .DS_Store
+
+.vercel
+.superpowers/

@@ -3,7 +3,7 @@ export type Lang = "es" | "it" | "en";
 export const I18N: Record<Lang, Record<string, string>> = {
   es: {
     "role-chef-exec": "Chef ejecutivo", "badge-admin": "Admin",
-    "nav-home": "Inicio", "nav-chat": "Asistente IA", "nav-recipes": "Recetas", "nav-menus": "Menús", "nav-pantry": "Despensa", "nav-casa": "Casa",
+    "nav-home": "Inicio", "nav-chat": "Asistente IA", "nav-recipes": "Recetas", "nav-menus": "Menús", "nav-pantry": "Despensa", "nav-casa": "Casa", "nav-profile": "Perfil",
     "dash-subtitle": "El cuaderno está abierto. ¿Qué imagina hoy?",
     "notepad-label": "Bloc de ideas — sin filtro, sin formato",
     "notepad-ph": "Pichón con espuma de café y jus de jerez. Servir sobre piedra caliente.",
@@ -91,7 +91,7 @@ export const I18N: Record<Lang, Record<string, string>> = {
   },
   it: {
     "role-chef-exec": "Chef esecutivo", "badge-admin": "Admin",
-    "nav-home": "Home", "nav-chat": "Assistente IA", "nav-recipes": "Ricette", "nav-menus": "Menù", "nav-pantry": "Dispensa", "nav-casa": "Casa",
+    "nav-home": "Home", "nav-chat": "Assistente IA", "nav-recipes": "Ricette", "nav-menus": "Menù", "nav-pantry": "Dispensa", "nav-casa": "Casa", "nav-profile": "Profilo",
     "dash-subtitle": "Il taccuino è aperto. Cosa immagina oggi?",
     "notepad-label": "Taccuino delle idee — senza filtro, senza formato",
     "notepad-ph": "Piccione con schiuma di caffè e jus di sherry. Servire su pietra calda.",
@@ -179,7 +179,7 @@ export const I18N: Record<Lang, Record<string, string>> = {
   },
   en: {
     "role-chef-exec": "Executive chef", "badge-admin": "Admin",
-    "nav-home": "Home", "nav-chat": "AI assistant", "nav-recipes": "Recipes", "nav-menus": "Menus", "nav-pantry": "Pantry", "nav-casa": "House",
+    "nav-home": "Home", "nav-chat": "AI assistant", "nav-recipes": "Recipes", "nav-menus": "Menus", "nav-pantry": "Pantry", "nav-casa": "House", "nav-profile": "Profile",
     "dash-subtitle": "The notebook is open. What are you imagining today?",
     "notepad-label": "Idea book — no filter, no formatting",
     "notepad-ph": "Pigeon with coffee foam and sherry jus. Serve on hot stone.",

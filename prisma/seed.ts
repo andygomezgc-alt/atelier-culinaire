@@ -18,11 +18,18 @@ async function main() {
         passwordHash: await bcrypt.hash(password, 10),
         name,
         role: "exec",
+        accessLevel: "admin",
         initials: "MR",
         lang: "es",
       },
     });
     console.log(`Created chef: ${email} / ${password}`);
+  } else if (chef.accessLevel !== "admin") {
+    chef = await prisma.user.update({
+      where: { id: chef.id },
+      data: { accessLevel: "admin" },
+    });
+    console.log(`Promoted ${email} to admin.`);
   }
 
   // ---------- Restaurant ----------

@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useLang } from "./LangProvider";
@@ -25,10 +25,12 @@ const NAV = [
   { href: "/menus", key: "nav-menus", icon: Ico.menus, slug: "menus" },
   { href: "/pantry", key: "nav-pantry", icon: Ico.pantry, slug: "pantry" },
   { href: "/casa", key: "nav-casa", icon: Ico.casa, slug: "casa" },
+  { href: "/profile", key: "nav-profile", icon: Ico.user, slug: "profile" },
 ];
 
 export function AppShell({ user, children }: { user: Profile; children: React.ReactNode }) {
   const path = usePathname();
+  const router = useRouter();
   const { t, lang, setLang } = useLang();
   const [profile, setProfile] = useState<Profile>(user);
   const [restaurant, setRestaurant] = useState<Restaurant>({ name: "Ristorante Marche" });
@@ -57,7 +59,7 @@ export function AppShell({ user, children }: { user: Profile; children: React.Re
           <div className="restaurant">{restaurant.name || "Atelier Culinaire"}</div>
         </div>
 
-        <div className="chef-card">
+        <button className="chef-card" onClick={() => router.push("/profile")}>
           <div className="avatar">
             {profile.photoUrl ? (
               <img src={profile.photoUrl} alt="" />
@@ -70,7 +72,7 @@ export function AppShell({ user, children }: { user: Profile; children: React.Re
             <div className="role">{t("role-chef-exec")}</div>
           </div>
           <div className="badge">{t("badge-admin")}</div>
-        </div>
+        </button>
 
         <nav className="nav">
           {NAV.map((it) => {
