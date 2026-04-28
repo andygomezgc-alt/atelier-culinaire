@@ -77,6 +77,38 @@ export default function DashboardPage() {
       <h1 className="page-title">{greeting}</h1>
       <p className="page-subtitle">{t("dash-subtitle")}</p>
 
+      <div className="dash-nav-cards">
+        <a href="/chat" className="dash-nav-card primary">
+          <div className="dash-nav-card-icon">💬</div>
+          <div className="dash-nav-card-body">
+            <div className="dash-nav-card-title">{t("nav-chat")}</div>
+            <div className="dash-nav-card-sub">{t("dash-card-chat-sub")}</div>
+          </div>
+          <div className="dash-nav-card-badge">IA</div>
+        </a>
+        <a href="/recipes" className="dash-nav-card">
+          <div className="dash-nav-card-icon">📋</div>
+          <div className="dash-nav-card-body">
+            <div className="dash-nav-card-title">{t("nav-recipes")}</div>
+            <div className="dash-nav-card-sub">{stats.approved} {t("stat-approved")} · {stats.drafts} {t("stat-drafts")}</div>
+          </div>
+        </a>
+        <a href="/menus" className="dash-nav-card">
+          <div className="dash-nav-card-icon">🍽️</div>
+          <div className="dash-nav-card-body">
+            <div className="dash-nav-card-title">{t("nav-menus")}</div>
+            <div className="dash-nav-card-sub">{stats.menus} {t("stat-menus")}</div>
+          </div>
+        </a>
+        <a href="/pantry" className="dash-nav-card">
+          <div className="dash-nav-card-icon">🧺</div>
+          <div className="dash-nav-card-body">
+            <div className="dash-nav-card-title">{t("nav-pantry")}</div>
+            <div className="dash-nav-card-sub">{t("dash-card-pantry-sub")}</div>
+          </div>
+        </a>
+      </div>
+
       <div className="dash-hero">
         <div>
           <div className="notepad">
