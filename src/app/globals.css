@@ -957,6 +957,9 @@ textarea{ resize: vertical; }
 .login-brand .s{ font-family: var(--f-serif); font-style: italic; color: var(--ink-mute); font-size: 14px; }
 .login-error{ color: #b34a3a; font-size: 12.5px; margin-top: 8px; font-family: var(--f-serif); font-style: italic; }
 
+/* MOBILE TOPBAR (profile btn) — hidden on desktop */
+.mobile-topbar{ display: none; }
+
 /* MOBILE — bottom nav + touch-friendly */
 @media (max-width: 720px){
   /* Layout: stack vertically, bottom nav fixed */
@@ -1004,6 +1007,7 @@ textarea{ resize: vertical; }
     border-radius: 0;
     white-space: nowrap;
   }
+  .nav-item.nav-desktop-only{ display: none; }
   .nav-item::before{ display: none; }
   .nav-item.active{
     background: rgba(176,141,87,.18);
@@ -1013,7 +1017,7 @@ textarea{ resize: vertical; }
 
   /* Main: add bottom padding so content isn't hidden by nav */
   .main{ order: 1; }
-  .screen-inner{ padding: 16px 16px 80px; }
+  .screen-inner{ padding: 14px 14px 80px; }
 
   /* Typography scale down */
   .page-title{ font-size: 26px; }
@@ -1027,8 +1031,43 @@ textarea{ resize: vertical; }
   .btn{ min-height: 44px; }
   .btn-sm{ min-height: 38px; }
 
+  /* Mobile topbar */
+  .mobile-topbar{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid var(--hair);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+  .mobile-topbar-brand{
+    font-family: var(--f-serif);
+    font-style: italic;
+    font-size: 13.5px;
+    color: var(--ink-mute);
+  }
+  .mobile-profile-btn{
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--f-display);
+    font-size: 12px;
+    letter-spacing: .04em;
+    display: grid; place-items: center;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid rgba(176,141,87,.35);
+    flex-shrink: 0;
+  }
+  .mobile-profile-btn img{ width: 100%; height: 100%; object-fit: cover; }
+  .mobile-profile-btn:hover{ border-color: var(--accent-2); }
+
   /* Grids → single column */
-  .dash-nav-cards{ grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .dash-nav-cards{ grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-bottom: 20px; }
   .dash-nav-card{ padding: 14px 12px; gap: 10px; }
   .dash-nav-card-icon{ width: 40px; height: 40px; font-size: 18px; }
   .dash-nav-card-title{ font-size: 14px; }

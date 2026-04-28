@@ -18,14 +18,15 @@ type Profile = {
 
 type Restaurant = { name: string };
 
+// desktopOnly items show in sidebar but NOT in mobile bottom nav
 const NAV = [
   { href: "/dashboard", key: "nav-home", icon: Ico.home, slug: "dashboard" },
   { href: "/chat", key: "nav-chat", icon: Ico.chat, slug: "chat" },
   { href: "/recipes", key: "nav-recipes", icon: Ico.recipes, slug: "recipes" },
   { href: "/menus", key: "nav-menus", icon: Ico.menus, slug: "menus" },
   { href: "/pantry", key: "nav-pantry", icon: Ico.pantry, slug: "pantry" },
-  { href: "/casa", key: "nav-casa", icon: Ico.casa, slug: "casa" },
-  { href: "/profile", key: "nav-profile", icon: Ico.user, slug: "profile" },
+  { href: "/profile", key: "nav-profile", icon: Ico.user, slug: "profile", desktopOnly: true },
+  { href: "/casa", key: "nav-casa", icon: Ico.casa, slug: "casa", desktopOnly: true },
 ];
 
 export function AppShell({ user, children }: { user: Profile; children: React.ReactNode }) {
@@ -79,7 +80,7 @@ export function AppShell({ user, children }: { user: Profile; children: React.Re
             const Icon = it.icon;
             const active = path === it.href || path?.startsWith(it.href + "/");
             return (
-              <Link key={it.href} href={it.href} className={`nav-item${active ? " active" : ""}`}>
+              <Link key={it.href} href={it.href} className={`nav-item${active ? " active" : ""}${"desktopOnly" in it && it.desktopOnly ? " nav-desktop-only" : ""}`}>
                 <Icon />
                 <span>{t(it.key)}</span>
               </Link>
@@ -100,6 +101,14 @@ export function AppShell({ user, children }: { user: Profile; children: React.Re
       </aside>
 
       <main className="main" style={isChat ? { overflow: "hidden" } : undefined}>
+        <div className="mobile-topbar">
+          <span className="mobile-topbar-brand">{restaurant.name}</span>
+          <button className="mobile-profile-btn" onClick={() => router.push("/profile")}>
+            {profile.photoUrl
+              ? <img src={profile.photoUrl} alt="" />
+              : (profile.initials || "CH")}
+          </button>
+        </div>
         {children}
       </main>
     </div>
