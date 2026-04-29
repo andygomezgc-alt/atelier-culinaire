@@ -1,0 +1,152 @@
+// Prisma schema — SQLite for local; switch provider to "postgresql" for Vercel.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Auth / users ----------
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  name          String
+  role          String    @default("exec") // exec | sous | rd
+  initials      String    @default("CH")
+  photoUrl      String?
+  lang          String    @default("es")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  ideas         Idea[]
+  recipes       Recipe[]
+  conversations Conversation[]
+}
+
+// ---------- Restaurant identity (single row, key="default") ----------
+model Restaurant {
+  id            String   @id @default("default")
+  name          String   @default("Ristorante Marche")
+  style         String   @default("")
+  season        String   @default("")
+  price         String   @default("")
+  restrictions  String   @default("")
+  updatedAt     DateTime @updatedAt
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  name      String
+  role      String   @default("contributor") // admin | editor | contributor | viewer
+  createdAt DateTime @default(now())
+}
+
+// ---------- Ideas ----------
+model Idea {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+// ---------- Recipes ----------
+model Recipe {
+  id         String          @id @default(cuid())
+  name       String
+  category   String          @default("")
+  status     String          @default("draft") // draft | testing | approved
+  priority   Boolean         @default(false)
+  summary    String          @default("")
+  content    String          @default("")
+  ingredients String         @default("") // freeform
+  technique  String          @default("")
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  authorId   String
+  author     User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  versions   RecipeVersion[]
+  photos     RecipePhoto[]
+}
+
+model RecipeVersion {
+  id        String   @id @default(cuid())
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  v         Int
+  tester    String   @default("")
+  note      String
+  createdAt DateTime @default(now())
+}
+
+model RecipePhoto {
+  id        String   @id @default(cuid())
+  recipeId  String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  url       String
+  createdAt DateTime @default(now())
+}
+
+// ---------- Menus ----------
+model Menu {
+  id         String         @id @default(cuid())
+  name       String
+  template   String         @default("elegante") // elegante | moderna | rustica
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  categories MenuCategory[]
+}
+
+model MenuCategory {
+  id     String     @id @default(cuid())
+  menuId String
+  menu   Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  name   String
+  order  Int        @default(0)
+  dishes MenuDish[]
+}
+
+model MenuDish {
+  id         String       @id @default(cuid())
+  categoryId String
+  category   MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  recipeId   String?
+  name       String
+  price      Float        @default(0)
+  order      Int          @default(0)
+}
+
+// ---------- Pantry ----------
+model PantryItem {
+  id        String   @id @default(cuid())
+  name      String
+  category  String   @default("verduras") // verduras | pescados | carnes | secos | lacteos
+  cost      Float    @default(0)
+  season    String   @default("allyear")  // spring | summer | autumn | winter | allyear
+  supplier  String   @default("")
+  stock     String   @default("")
+  createdAt DateTime @default(now())
+}
+
+// ---------- Chat ----------
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String    @default("Nueva conversación")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // user | assistant
+  content        String
+  createdAt      DateTime     @default(now())
+}
