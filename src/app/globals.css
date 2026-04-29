@@ -68,6 +68,7 @@ textarea{ resize: vertical; }
   display: grid;
   grid-template-columns: 240px 1fr;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
 }
 
@@ -882,16 +883,141 @@ textarea{ resize: vertical; }
 .login-brand .s{ font-family: var(--f-serif); font-style: italic; color: var(--ink-mute); font-size: 14px; }
 .login-error{ color: #b34a3a; font-size: 12.5px; margin-top: 8px; font-family: var(--f-serif); font-style: italic; }
 
-/* MOBILE */
+/* MOBILE — bottom nav + touch-friendly */
 @media (max-width: 720px){
-  #app{ grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-  .sidebar{ flex-direction: row; padding: 10px; align-items: center; gap: 8px; overflow-x: auto; }
-  .sidebar .brand, .sidebar .chef-card, .lang-switch, .logout-btn{ display: none; }
-  .nav{ flex-direction: row; flex: 1; }
-  .nav-item{ padding: 8px 10px; font-size: 12px; white-space: nowrap; }
-  .screen-inner{ padding: 20px 18px 60px; }
+  /* Layout: stack vertically, bottom nav fixed */
+  #app{
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+  }
+
+  /* Sidebar becomes fixed bottom nav bar */
+  .sidebar{
+    order: 2;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    flex-direction: row;
+    padding: 0;
+    gap: 0;
+    border-right: none;
+    border-top: 1px solid rgba(0,0,0,.28);
+    z-index: 100;
+    align-items: stretch;
+  }
+  .sidebar .brand,
+  .sidebar .chef-card,
+  .lang-switch,
+  .logout-btn{ display: none; }
+
+  /* Nav: distribute evenly across bottom bar */
+  .nav{
+    flex-direction: row;
+    flex: 1;
+    gap: 0;
+    margin-top: 0;
+  }
+  .nav-item{
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 4px;
+    font-size: 10px;
+    letter-spacing: .02em;
+    min-height: 60px;
+    border-radius: 0;
+    white-space: nowrap;
+  }
+  .nav-item::before{ display: none; }
+  .nav-item.active{
+    background: rgba(196,126,79,.18);
+    border-top: 2px solid var(--accent);
+  }
+  .nav-item svg{ width: 20px; height: 20px; opacity: 1; }
+
+  /* Main: add bottom padding so content isn't hidden by nav */
+  .main{ order: 1; }
+  .screen-inner{ padding: 16px 16px 80px; }
+
+  /* Typography scale down */
+  .page-title{ font-size: 26px; }
+  .page-subtitle{ font-size: 15px; margin-bottom: 20px; }
+  .page-eyebrow{ margin-bottom: 4px; }
+
+  /* Prevent iOS zoom on inputs */
+  input, textarea, select{ font-size: 16px !important; }
+
+  /* Buttons: bigger touch target */
+  .btn{ min-height: 44px; }
+  .btn-sm{ min-height: 38px; }
+
+  /* Grids → single column */
   .dash-hero{ grid-template-columns: 1fr; }
   .menu-layout{ grid-template-columns: 1fr; height: auto; }
   .chat-body{ grid-template-columns: 1fr; }
   .chat-aside{ display: none; }
+  .casa-grid{ grid-template-columns: 1fr; }
+
+  /* Dashboard stat cards: 2 columns */
+  .stats-row{ grid-template-columns: 1fr 1fr; }
+
+  /* Recipes table → card list */
+  .recipes-table thead{ display: none; }
+  .recipes-table tbody tr{
+    display: block;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--hair);
+    background: var(--bg-2);
+  }
+  .recipes-table tbody td{
+    display: flex; align-items: center; gap: 8px;
+    padding: 3px 0;
+    border: none;
+    font-size: 13px;
+  }
+  .recipes-table tbody td::before{
+    content: attr(data-label);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-mute);
+    min-width: 72px;
+  }
+
+  /* Pantry table → card list */
+  .pantry-table thead{ display: none; }
+  .pantry-table tbody tr{
+    display: block;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-radius: var(--r-md);
+    border: 1px solid var(--hair);
+    background: var(--bg-2);
+  }
+  .pantry-table tbody td{
+    display: flex; align-items: center; gap: 8px;
+    padding: 2px 0;
+    border: none;
+    font-size: 13px;
+  }
+
+  /* Chat */
+  .chat-screen{ height: calc(100dvh - 60px); }
+  .chat-banner{ flex-wrap: wrap; gap: 6px; padding: 8px 12px; }
+  .chat-banner-left{ display: none; }
+  .chat-composer-inner textarea{ font-size: 16px; }
+
+  /* Menu editor */
+  .menu-list-panel{ border-right: none; border-bottom: 1px solid var(--hair); }
+}
+
+/* Extra small: 375px phones */
+@media (max-width: 400px){
+  .nav-item span{ display: none; }
+  .nav-item{ min-height: 56px; }
+  .screen-inner{ padding: 12px 12px 76px; }
 }
