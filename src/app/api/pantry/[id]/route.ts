@@ -1,21 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser, authError } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { withErrorHandler, parseBody } from "@/lib/api/handler";
+import { updatePantryItemSchema } from "@/lib/validation";
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  { const _u = await getCurrentUser(); if (!_u) return authError(); }
-  const body = await req.json();
-  const data: Record<string, unknown> = {};
-  for (const k of ["name", "category", "cost", "season", "supplier", "stock"] as const) {
-    if (k in body) data[k] = body[k];
-  }
-  if ("cost" in data) data.cost = parseFloat(String(data.cost)) || 0;
-  const item = await prisma.pantryItem.update({ where: { id: params.id }, data });
+export const PUT = withErrorHandler(async (req: Request, { params }: { params: { id: string } }) => {
+  await requireUser();
+  const parsed = await parseBody(req, updatePantryItemSchema);
+  if (!parsed.success) return parsed.response;
+  const item = await prisma.pantryItem.update({ where: { id: params.id }, data: parsed.data });
   return NextResponse.json(item);
-}
+});
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  { const _u = await getCurrentUser(); if (!_u) return authError(); }
+export const DELETE = withErrorHandler(async (_req: Request, { params }: { params: { id: string } }) => {
+  await requireUser();
   await prisma.pantryItem.delete({ where: { id: params.id } });
   return NextResponse.json({ ok: true });
-}
+});

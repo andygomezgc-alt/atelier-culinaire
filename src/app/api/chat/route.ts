@@ -1,28 +1,31 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser, authError } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { withErrorHandler, parseBody, err } from "@/lib/api/handler";
 import { anthropic, ANTHROPIC_MODEL, buildSystemPrompt } from "@/lib/anthropic";
 import { langName, type Lang } from "@/lib/i18n";
+import { z } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-type Body = {
-  conversationId?: string;
-  message: string;
-  lang?: Lang;
-};
+const chatSchema = z.object({
+  conversationId: z.string().optional(),
+  message: z.string().min(1, "message required"),
+  lang: z.enum(["es", "it", "en"]).optional(),
+});
 
-export async function POST(req: Request) {
-  const u = await getCurrentUser(); if (!u) return authError();
-  const body = (await req.json()) as Body;
-  if (!body.message?.trim()) return NextResponse.json({ error: "empty" }, { status: 400 });
+export const POST = withErrorHandler(async (req: Request) => {
+  const u = await requireUser();
+  const parsed = await parseBody(req, chatSchema);
+  if (!parsed.success) return parsed.response;
 
-  // Resolve / create conversation
-  let convId = body.conversationId;
+  const { message, lang: bodyLang, conversationId: bodyConvId } = parsed.data;
+
+  let convId = bodyConvId;
   if (!convId) {
     const c = await prisma.conversation.create({
-      data: { userId: u.id, title: body.message.slice(0, 60) },
+      data: { userId: u.id, title: message.slice(0, 60) },
     });
     convId = c.id;
   } else {
@@ -32,23 +35,18 @@ export async function POST(req: Request) {
     if (!owns) return new NextResponse("Forbidden", { status: 403 });
   }
 
-  // Persist user message
   await prisma.message.create({
-    data: { conversationId: convId, role: "user", content: body.message },
+    data: { conversationId: convId, role: "user", content: message },
   });
 
-  // Build context
   const [restaurant, pantry, recipes, history] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: "default" } }),
     prisma.pantryItem.findMany({ select: { name: true }, take: 30 }),
     prisma.recipe.findMany({ select: { name: true }, orderBy: { createdAt: "desc" }, take: 30 }),
-    prisma.message.findMany({
-      where: { conversationId: convId },
-      orderBy: { createdAt: "asc" },
-    }),
+    prisma.message.findMany({ where: { conversationId: convId }, orderBy: { createdAt: "asc" } }),
   ]);
 
-  const lang: Lang = body.lang || (u.lang as Lang) || "es";
+  const lang: Lang = bodyLang || (u.lang as Lang) || "es";
   const system = buildSystemPrompt({
     langName: langName(lang),
     house: {
@@ -80,10 +78,10 @@ export async function POST(req: Request) {
       .trim();
     if (!assistantText) assistantText = "(respuesta vacía)";
   } catch (e) {
-    const err = e as { message?: string };
+    const apiErr = e as { message?: string };
     assistantText =
       "_(Error de conexión con el asistente. Intente de nuevo en un momento.)_\n\n" +
-      (err.message || "Unknown error");
+      (apiErr.message || "Unknown error");
   }
 
   const stored = await prisma.message.create({
@@ -95,4 +93,4 @@ export async function POST(req: Request) {
     conversationId: convId,
     message: { id: stored.id, role: "assistant", content: assistantText, createdAt: stored.createdAt },
   });
-}
+});

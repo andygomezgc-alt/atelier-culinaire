@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser, authError } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { withErrorHandler, parseBody } from "@/lib/api/handler";
+import { createTeamMemberSchema } from "@/lib/validation";
 
-export async function GET() {
-  { const _u = await getCurrentUser(); if (!_u) return authError(); }
+export const GET = withErrorHandler(async () => {
+  await requireUser();
   const list = await prisma.teamMember.findMany({ orderBy: { createdAt: "asc" } });
   return NextResponse.json(list);
-}
+});
 
-export async function POST(req: Request) {
-  { const _u = await getCurrentUser(); if (!_u) return authError(); }
-  const { name, role } = await req.json();
-  if (!name) return NextResponse.json({ error: "name required" }, { status: 400 });
-  const m = await prisma.teamMember.create({ data: { name, role: role || "contributor" } });
+export const POST = withErrorHandler(async (req: Request) => {
+  await requireUser();
+  const parsed = await parseBody(req, createTeamMemberSchema);
+  if (!parsed.success) return parsed.response;
+  const m = await prisma.teamMember.create({ data: parsed.data });
   return NextResponse.json(m);
-}
+});

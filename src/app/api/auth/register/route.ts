@@ -2,17 +2,22 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { initialsFrom } from "@/lib/utils";
+import { withErrorHandler, parseBody, err } from "@/lib/api/handler";
+import { z } from "zod";
 
-export async function POST(req: Request) {
-  const { email, password, name } = await req.json();
-  if (!email || !password || !name) {
-    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-  }
-  if (password.length < 6) {
-    return NextResponse.json({ error: "Password too short" }, { status: 400 });
-  }
+const registerSchema = z.object({
+  email: z.string().email("invalid email"),
+  password: z.string().min(6, "Password too short"),
+  name: z.string().min(1, "name required"),
+});
+
+export const POST = withErrorHandler(async (req: Request) => {
+  const parsed = await parseBody(req, registerSchema);
+  if (!parsed.success) return parsed.response;
+
+  const { email, password, name } = parsed.data;
   const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
-  if (existing) return NextResponse.json({ error: "Already exists" }, { status: 409 });
+  if (existing) return err("Already exists", 409);
 
   const user = await prisma.user.create({
     data: {
@@ -24,4 +29,4 @@ export async function POST(req: Request) {
     },
   });
   return NextResponse.json({ id: user.id });
-}
+});

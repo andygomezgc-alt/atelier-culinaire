@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { ZodSchema } from 'zod'
+import { UnauthorizedError } from '@/lib/auth'
 
 /** Standardized successful response */
 export function ok<T>(data: T, status = 200) {
@@ -44,6 +45,9 @@ export function withErrorHandler<Args extends unknown[]>(
     try {
       return await handler(...args)
     } catch (e) {
+      if (e instanceof UnauthorizedError) {
+        return new NextResponse('Unauthorized', { status: 401 })
+      }
       console.error('[API Error]', e)
       return err('Internal server error', 500)
     }

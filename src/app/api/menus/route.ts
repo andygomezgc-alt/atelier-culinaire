@@ -1,44 +1,41 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser, authError } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { withErrorHandler, parseBody } from "@/lib/api/handler";
+import { createMenuSchema } from "@/lib/validation";
 
-export async function GET() {
-  { const _u = await getCurrentUser(); if (!_u) return authError(); }
-  const list = await prisma.menu.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      categories: {
-        orderBy: { order: "asc" },
-        include: { dishes: { orderBy: { order: "asc" } } },
-      },
-    },
-  });
+const include = {
+  categories: {
+    orderBy: { order: "asc" as const },
+    include: { dishes: { orderBy: { order: "asc" as const } } },
+  },
+};
+
+export const GET = withErrorHandler(async () => {
+  await requireUser();
+  const list = await prisma.menu.findMany({ orderBy: { createdAt: "desc" }, include });
   return NextResponse.json(list);
-}
+});
 
-export async function POST(req: Request) {
-  { const _u = await getCurrentUser(); if (!_u) return authError(); }
-  const body = await req.json();
+export const POST = withErrorHandler(async (req: Request) => {
+  await requireUser();
+  const parsed = await parseBody(req, createMenuSchema);
+  if (!parsed.success) return parsed.response;
+  const defaultCategories = [
+    { name: "Entradas frías" }, { name: "Entradas calientes" },
+    { name: "Primeros" }, { name: "Pescados" }, { name: "Carnes" }, { name: "Postres" },
+  ];
   const m = await prisma.menu.create({
     data: {
-      name: body.name || "Nuevo menú",
-      template: body.template || "elegante",
+      name: parsed.data.name,
+      template: parsed.data.template,
       categories: {
-        create: (
-          body.categories || [
-            { name: "Entradas frías" },
-            { name: "Entradas calientes" },
-            { name: "Primeros" },
-            { name: "Pescados" },
-            { name: "Carnes" },
-            { name: "Postres" },
-          ]
-        ).map((c: { name: string }, i: number) => ({ name: c.name, order: i })),
+        create: (parsed.data.categories ?? defaultCategories).map((c, i) => ({
+          name: c.name, order: i,
+        })),
       },
     },
-    include: {
-      categories: { include: { dishes: true }, orderBy: { order: "asc" } },
-    },
+    include,
   });
   return NextResponse.json(m);
-}
+});

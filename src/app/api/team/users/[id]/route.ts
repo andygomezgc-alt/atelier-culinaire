@@ -1,39 +1,33 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { withErrorHandler, parseBody, err } from "@/lib/api/handler";
+import { updateUserAccessSchema } from "@/lib/validation";
+import { z } from "zod";
 
-const ACCESS = ["admin", "editor", "viewer"] as const;
-const ROLES = ["exec", "sous", "rd"] as const;
+const updateUserSchema = z.object({
+  accessLevel: z.enum(["admin", "editor", "viewer"]).optional(),
+  role: z.enum(["exec", "sous", "rd"]).optional(),
+});
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
-  const me = await getCurrentUser();
-  if (!me) return new NextResponse("Unauthorized", { status: 401 });
+export const PUT = withErrorHandler(async (req: Request, { params }: { params: { id: string } }) => {
+  const me = await requireUser();
   if (me.accessLevel !== "admin") return new NextResponse("Forbidden", { status: 403 });
-  if (params.id === me.id) return NextResponse.json({ error: "cannot_modify_self" }, { status: 400 });
-
-  const body = await req.json();
-  const data: Record<string, unknown> = {};
-  if (typeof body.accessLevel === "string" && (ACCESS as readonly string[]).includes(body.accessLevel)) {
-    data.accessLevel = body.accessLevel;
-  }
-  if (typeof body.role === "string" && (ROLES as readonly string[]).includes(body.role)) {
-    data.role = body.role;
-  }
+  if (params.id === me.id) return err("cannot_modify_self", 400);
+  const parsed = await parseBody(req, updateUserSchema);
+  if (!parsed.success) return parsed.response;
   const u = await prisma.user.update({
     where: { id: params.id },
-    data,
+    data: parsed.data,
     select: { id: true, email: true, name: true, role: true, accessLevel: true, initials: true, photoUrl: true, phone: true },
   });
   return NextResponse.json(u);
-}
+});
 
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
-  const me = await getCurrentUser();
-  if (!me) return new NextResponse("Unauthorized", { status: 401 });
+export const DELETE = withErrorHandler(async (_req: Request, { params }: { params: { id: string } }) => {
+  const me = await requireUser();
   if (me.accessLevel !== "admin") return new NextResponse("Forbidden", { status: 403 });
-  if (params.id === me.id) return NextResponse.json({ error: "cannot_delete_self" }, { status: 400 });
-
-  // Soft revoke: set accessLevel to viewer (preserves FKs to ideas/recipes/conversations).
+  if (params.id === me.id) return err("cannot_delete_self", 400);
   await prisma.user.update({ where: { id: params.id }, data: { accessLevel: "viewer" } });
   return NextResponse.json({ ok: true });
-}
+});

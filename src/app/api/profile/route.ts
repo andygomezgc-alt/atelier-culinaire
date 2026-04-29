@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { withErrorHandler, parseBody, err } from "@/lib/api/handler";
+import { updateProfileSchema } from "@/lib/validation";
 
 function publicUser(u: {
   id: string; email: string; name: string; role: string;
@@ -15,36 +17,33 @@ function publicUser(u: {
   };
 }
 
-export async function GET() {
-  const u = await getCurrentUser();
-  if (!u) return new NextResponse("Unauthorized", { status: 401 });
+export const GET = withErrorHandler(async () => {
+  const u = await requireUser();
   return NextResponse.json(publicUser(u));
-}
+});
 
-export async function PUT(req: Request) {
-  const u = await getCurrentUser();
-  if (!u) return new NextResponse("Unauthorized", { status: 401 });
-  const body = await req.json();
-  const data: Record<string, unknown> = {};
+export const PUT = withErrorHandler(async (req: Request) => {
+  const u = await requireUser();
+  const parsed = await parseBody(req, updateProfileSchema);
+  if (!parsed.success) return parsed.response;
 
-  for (const k of ["name", "role", "initials", "photoUrl", "lang", "phone"] as const) {
-    if (k in body) data[k] = body[k];
+  const { currentPassword, newPassword, email, ...fields } = parsed.data;
+  const data: Record<string, unknown> = { ...fields };
+
+  if (email && email.toLowerCase() !== u.email) {
+    const taken = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (taken) return err("email_taken", 409);
+    data.email = email.toLowerCase();
   }
 
-  if (typeof body.email === "string" && body.email.toLowerCase() !== u.email) {
-    const taken = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
-    if (taken) return NextResponse.json({ error: "email_taken" }, { status: 409 });
-    data.email = body.email.toLowerCase();
-  }
-
-  if (typeof body.newPassword === "string" && body.newPassword.length >= 6) {
+  if (newPassword) {
     if (u.passwordHash) {
-      const ok = await bcrypt.compare(body.currentPassword || "", u.passwordHash);
-      if (!ok) return NextResponse.json({ error: "wrong_password" }, { status: 403 });
+      const ok = await bcrypt.compare(currentPassword ?? "", u.passwordHash);
+      if (!ok) return err("wrong_password", 403);
     }
-    data.passwordHash = await bcrypt.hash(body.newPassword, 10);
+    data.passwordHash = await bcrypt.hash(newPassword, 10);
   }
 
   const updated = await prisma.user.update({ where: { id: u.id }, data });
   return NextResponse.json(publicUser(updated));
-}
+});

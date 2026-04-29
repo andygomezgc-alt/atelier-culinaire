@@ -1,33 +1,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getCurrentUser, authError } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { withErrorHandler, parseBody, err } from "@/lib/api/handler";
+import { createRecipeSchema } from "@/lib/validation";
 
-export async function GET() {
-  { const _u = await getCurrentUser(); if (!_u) return authError(); }
-  const list = await prisma.recipe.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { versions: { orderBy: { v: "asc" } }, photos: true },
-  });
+const include = {
+  versions: { orderBy: { v: "asc" as const } },
+  photos: true,
+};
+
+export const GET = withErrorHandler(async () => {
+  await requireUser();
+  const list = await prisma.recipe.findMany({ orderBy: { createdAt: "desc" }, include });
   return NextResponse.json(list);
-}
+});
 
-export async function POST(req: Request) {
-  const u = await getCurrentUser(); if (!u) return authError();
-  const body = await req.json();
-  if (!body.name) return NextResponse.json({ error: "name required" }, { status: 400 });
+export const POST = withErrorHandler(async (req: Request) => {
+  const u = await requireUser();
+  const parsed = await parseBody(req, createRecipeSchema);
+  if (!parsed.success) return parsed.response;
   const r = await prisma.recipe.create({
-    data: {
-      name: body.name,
-      category: body.category || "",
-      status: body.status || "draft",
-      priority: !!body.priority,
-      summary: body.summary || "",
-      content: body.content || "",
-      ingredients: body.ingredients || "",
-      technique: body.technique || "",
-      authorId: u.id,
-    },
-    include: { versions: true, photos: true },
+    data: { ...parsed.data, authorId: u.id },
+    include,
   });
   return NextResponse.json(r);
-}
+});
