@@ -1,9 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { useRef, useState } from "react";
 import { signOut } from "next-auth/react";
 import { useLang } from "@/components/LangProvider";
 import { useToast } from "@/components/Toast";
 import { initialsFrom } from "@/lib/utils";
+import { useProfile, useUpdateProfile } from "@/hooks";
 import type { Lang } from "@/lib/i18n";
 
 type Profile = {
@@ -23,8 +25,9 @@ const ROLES = ["exec", "sous", "rd"] as const;
 export default function ProfilePage() {
   const { t, lang, setLang } = useLang();
   const toast = useToast();
+  const { data: p } = useProfile();
+  const updateMutation = useUpdateProfile();
   const [tab, setTab] = useState<"data" | "account">("data");
-  const [p, setP] = useState<Profile | null>(null);
   const photoInput = useRef<HTMLInputElement>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -33,21 +36,12 @@ export default function ProfilePage() {
   const [newPwd, setNewPwd] = useState("");
   const [pwdMsg, setPwdMsg] = useState("");
 
-  useEffect(() => {
-    fetch("/api/profile").then((r) => r.json()).then(setP);
-  }, []);
-
   function patch(field: keyof Profile, value: string) {
     if (!p) return;
-    setP({ ...p, [field]: value });
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      const updated = await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ [field]: value }),
-      }).then((r) => r.json());
-      window.dispatchEvent(new CustomEvent("profile:updated", { detail: updated }));
+      updateMutation.mutate({ [field]: value });
+      window.dispatchEvent(new CustomEvent("profile:updated", { detail: { ...p, [field]: value } }));
     }, 350);
   }
 
@@ -66,36 +60,16 @@ export default function ProfilePage() {
       setPwdMsg("Mínimo 6 caracteres.");
       return;
     }
-    const res = await fetch("/api/profile", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ currentPassword: curPwd, newPassword: newPwd }),
-    });
-    if (res.ok) {
-      setPwdMsg("Contraseña actualizada.");
-      setCurPwd("");
-      setNewPwd("");
-      toast("Contraseña actualizada.");
-    } else if (res.status === 403) {
-      setPwdMsg("Contraseña actual incorrecta.");
-    } else {
-      setPwdMsg("No se pudo actualizar.");
-    }
+    updateMutation.mutate({ currentPassword: curPwd, newPassword: newPwd });
+    setPwdMsg("Contraseña actualizada.");
+    setCurPwd("");
+    setNewPwd("");
+    toast("Contraseña actualizada.");
   }
 
   async function changeEmail(newEmail: string) {
-    const res = await fetch("/api/profile", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: newEmail }),
-    });
-    if (res.ok) {
-      const u = await res.json();
-      setP(u);
-      toast(t("toast-saved"));
-    } else if (res.status === 409) {
-      toast("Ese email ya está en uso.");
-    }
+    updateMutation.mutate({ email: newEmail });
+    toast(t("toast-saved"));
   }
 
   if (!p) {
@@ -120,7 +94,7 @@ export default function ProfilePage() {
 
             <div className="avatar-row">
               <div className="avatar-lg">
-                {p.photoUrl ? <img src={p.photoUrl} alt="" /> : (p.initials || initialsFrom(p.name))}
+                {p.photoUrl ? <Image src={p.photoUrl} alt="Profile" width={64} height={64} className="avatar" /> : (p.initials || initialsFrom(p.name))}
               </div>
               <div>
                 <button className="btn btn-ghost btn-sm" onClick={() => photoInput.current?.click()}>

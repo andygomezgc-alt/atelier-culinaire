@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
@@ -63,7 +64,7 @@ export function AppShell({ user, children }: { user: Profile; children: React.Re
         <button className="chef-card" onClick={() => router.push("/profile")}>
           <div className="avatar">
             {profile.photoUrl ? (
-              <img src={profile.photoUrl} alt="" />
+              <Image src={profile.photoUrl} alt="Profile" width={40} height={40} className="avatar" />
             ) : (
               profile.initials || "CH"
             )}
@@ -105,7 +106,7 @@ export function AppShell({ user, children }: { user: Profile; children: React.Re
           <span className="mobile-topbar-brand">{restaurant.name}</span>
           <button className="mobile-profile-btn" onClick={() => router.push("/profile")}>
             {profile.photoUrl
-              ? <img src={profile.photoUrl} alt="" />
+              ? <Image src={profile.photoUrl} alt="Profile" width={40} height={40} className="avatar" />
               : (profile.initials || "CH")}
           </button>
         </div>

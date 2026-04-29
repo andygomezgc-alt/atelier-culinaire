@@ -4,6 +4,7 @@ import { useLang } from "@/components/LangProvider";
 import { useToast } from "@/components/Toast";
 import { Ico } from "@/components/icons";
 import { formatDate, formatLongDate, shortText, escapeHtml } from "@/lib/utils";
+import { useMenus, useCreateMenu, useUpdateMenu, useDeleteMenu, useRecipes } from "@/hooks";
 
 type Dish = { id: string; recipeId: string | null; name: string; price: number; order: number };
 type Cat = { id: string; name: string; order: number; dishes: Dish[] };
@@ -13,21 +14,25 @@ type RecipeLite = { id: string; name: string; status: string; summary: string; c
 export default function MenusPage() {
   const { t, lang } = useLang();
   const toast = useToast();
+  const { data: remoteMenus = [] } = useMenus();
+  const { data: recipes = [] } = useRecipes();
+  const updateMenuMutation = useUpdateMenu();
+  const createMenuMutation = useCreateMenu();
+  const deleteMenuMutation = useDeleteMenu();
   const [menus, setMenus] = useState<Menu[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [recipes, setRecipes] = useState<RecipeLite[]>([]);
   const [houseName, setHouseName] = useState("Ristorante Marche");
   const dragging = useRef<{ catId: string; dishId: string } | null>(null);
 
-  async function loadMenus() {
-    const list = await fetch("/api/menus").then((r) => r.json());
-    setMenus(list);
-    if (!activeId && list[0]) setActiveId(list[0].id);
-  }
+  useEffect(() => {
+    if (remoteMenus.length) setMenus(remoteMenus as unknown as Menu[]);
+  }, [remoteMenus]);
 
   useEffect(() => {
-    loadMenus();
-    fetch("/api/recipes").then((r) => r.json()).then(setRecipes).catch(() => {});
+    if (!activeId && menus[0]) setActiveId(menus[0].id);
+  }, [menus, activeId]);
+
+  useEffect(() => {
     fetch("/api/restaurant").then((r) => r.json()).then((r) => r && setHouseName(r.name)).catch(() => {});
   }, []);
 
@@ -36,40 +41,29 @@ export default function MenusPage() {
   async function newMenu() {
     const name = prompt(t("prompt-menu-name"), "Menú Otoño 2026");
     if (!name) return;
-    const m = await fetch("/api/menus", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name,
-        categories: [
-          { name: t("category-cold") }, { name: t("category-hot") },
-          { name: t("category-pasta") }, { name: t("category-fish") },
-          { name: t("category-meats") }, { name: t("category-dessert") },
-        ],
-      }),
-    }).then((r) => r.json());
-    setMenus((l) => [m, ...l]);
-    setActiveId(m.id);
+    createMenuMutation.mutate({
+      name,
+      template: "elegante",
+      categories: [
+        { name: t("category-cold") }, { name: t("category-hot") },
+        { name: t("category-pasta") }, { name: t("category-fish") },
+        { name: t("category-meats") }, { name: t("category-dessert") },
+      ],
+    });
     toast(t("toast-menu-created"));
   }
 
-  async function deleteMenu() {
+  async function deleteMenuHandler() {
     if (!active) return;
     if (!confirm(t("confirm-delete-menu"))) return;
-    await fetch(`/api/menus/${active.id}`, { method: "DELETE" });
+    deleteMenuMutation.mutate(active.id);
     const left = menus.filter((m) => m.id !== active.id);
-    setMenus(left);
     setActiveId(left[0]?.id || null);
   }
 
   async function patchMenu(patch: Partial<Pick<Menu, "name" | "template">>) {
     if (!active) return;
-    setMenus((l) => l.map((m) => (m.id === active.id ? { ...m, ...patch } : m)));
-    await fetch(`/api/menus/${active.id}`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(patch),
-    });
+    updateMenuMutation.mutate({ id: active.id, data: patch });
   }
 
   async function addCategory() {
@@ -278,7 +272,7 @@ export default function MenusPage() {
                       </button>
                     ))}
                   </div>
-                  <button className="btn-icon" onClick={deleteMenu} title={t("menu-delete")}>
+                  <button className="btn-icon" onClick={deleteMenuHandler} title={t("menu-delete")}>
                     <Ico.trash />
                   </button>
                 </div>

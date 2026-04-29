@@ -5,26 +5,22 @@ import { useToast } from "@/components/Toast";
 import { Ico } from "@/components/icons";
 import { formatDate } from "@/lib/utils";
 import { RecipeModal, type Recipe } from "@/components/RecipeModal";
+import { useRecipes, useUpdateRecipe, useDeleteRecipe, useCreateRecipe, useProfile } from "@/hooks";
+import type { RecipeWithRelations } from "@/services/recipes";
 
 type Filter = "all" | "draft" | "testing" | "approved" | "priority";
 
 export default function RecipesPage() {
   const { t, lang } = useLang();
   const toast = useToast();
-  const [list, setList] = useState<Recipe[]>([]);
+  const { data: list = [] } = useRecipes();
+  const { data: profile } = useProfile();
+  const updateMutation = useUpdateRecipe();
+  const deleteMutation = useDeleteRecipe();
+  const createMutation = useCreateRecipe();
   const [filter, setFilter] = useState<Filter>("all");
   const [open, setOpen] = useState<Recipe | null>(null);
-  const [chefName, setChefName] = useState("");
-
-  async function load() {
-    const r = await fetch("/api/recipes").then((r) => r.json());
-    setList(r);
-  }
-
-  useEffect(() => {
-    load();
-    fetch("/api/profile").then((r) => r.json()).then((p) => p && setChefName(p.name)).catch(() => {});
-  }, []);
+  const chefName = profile?.name ?? "";
 
   const counts = {
     all: list.length,
@@ -38,30 +34,19 @@ export default function RecipesPage() {
   if (filter === "priority") filtered = list.filter((r) => r.priority);
   else if (filter !== "all") filtered = list.filter((r) => r.status === filter);
 
-  async function togglePriority(r: Recipe) {
-    const updated = await fetch(`/api/recipes/${r.id}`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ priority: !r.priority }),
-    }).then((x) => x.json());
-    setList((l) => l.map((x) => (x.id === r.id ? updated : x)));
+  async function togglePriority(r: RecipeWithRelations) {
+    updateMutation.mutate({ id: r.id, data: { priority: !r.priority } });
   }
 
-  async function advance(r: Recipe) {
-    const order: Recipe["status"][] = ["draft", "testing", "approved"];
-    const next = order[(order.indexOf(r.status) + 1) % order.length];
-    const updated = await fetch(`/api/recipes/${r.id}`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ status: next }),
-    }).then((x) => x.json());
-    setList((l) => l.map((x) => (x.id === r.id ? updated : x)));
+  async function advance(r: RecipeWithRelations) {
+    const order = ["draft", "testing", "approved"] as const;
+    const next = order[(order.indexOf(r.status as "draft" | "testing" | "approved") + 1) % order.length];
+    updateMutation.mutate({ id: r.id, data: { status: next } });
   }
 
-  async function remove(r: Recipe) {
+  async function remove(r: RecipeWithRelations) {
     if (!confirm(t("confirm-delete-recipe"))) return;
-    await fetch(`/api/recipes/${r.id}`, { method: "DELETE" });
-    setList((l) => l.filter((x) => x.id !== r.id));
+    deleteMutation.mutate(r.id);
     setOpen(null);
     toast(t("toast-recipe-deleted"));
   }
@@ -70,14 +55,8 @@ export default function RecipesPage() {
     const name = prompt(t("prompt-recipe-name"), "Nuevo plato");
     if (!name) return;
     const cat = prompt(t("prompt-recipe-cat"), t("category-meats")) || "—";
-    const created = await fetch("/api/recipes", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, category: cat, summary: "", content: "", status: "draft" }),
-    }).then((r) => r.json());
-    setList((l) => [created, ...l]);
+    createMutation.mutate({ name, category: cat, summary: "", content: "", status: "draft", priority: false, ingredients: "", technique: "" });
     toast(t("toast-recipe-saved"));
-    setOpen(created);
   }
 
   return (
@@ -107,7 +86,7 @@ export default function RecipesPage() {
           filtered.map((r) => {
             const stKey = r.status === "draft" ? "st-draft" : r.status === "testing" ? "st-testing" : "st-approved";
             return (
-              <article key={r.id} className={`recipe-card${r.priority ? " priority" : ""}`} onClick={() => setOpen(r)}>
+              <article key={r.id} className={`recipe-card${r.priority ? " priority" : ""}`} onClick={() => setOpen(r as unknown as Recipe)}>
                 <div className="recipe-card-head">
                   <div className="recipe-card-title">
                     {r.priority && <span className="star">★</span>}
@@ -151,9 +130,8 @@ export default function RecipesPage() {
           onClose={() => setOpen(null)}
           onChange={(r) => {
             setOpen(r);
-            setList((l) => l.map((x) => (x.id === r.id ? r : x)));
           }}
-          onDelete={() => remove(open)}
+          onDelete={() => remove(open as unknown as RecipeWithRelations)}
         />
       )}
     </section>

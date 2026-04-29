@@ -1,9 +1,11 @@
 "use client";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useLang } from "@/components/LangProvider";
 import { useToast } from "@/components/Toast";
 import { Ico } from "@/components/icons";
 import { initialsFrom } from "@/lib/utils";
+import { useTeam, useCreateTeamMember, useUpdateTeamMember, useDeleteTeamMember, useAllUsers, useUpdateUser, useDeleteUser, useProfile } from "@/hooks";
 
 type House = { name: string; style: string; season: string; price: string; restrictions: string };
 type Member = { id: string; name: string; role: string };
@@ -17,19 +19,21 @@ const ACCESS_LEVELS = ["admin", "editor", "viewer"] as const;
 export default function CasaPage() {
   const { t } = useLang();
   const toast = useToast();
+  const { data: team = [] } = useTeam();
+  const { data: users = [] } = useAllUsers();
+  const { data: me } = useProfile();
+  const updateTeamMutation = useUpdateTeamMember();
+  const deleteTeamMutation = useDeleteTeamMember();
+  const createTeamMutation = useCreateTeamMember();
+  const updateUserMutation = useUpdateUser();
+  const deleteUserMutation = useDeleteUser();
   const [house, setHouse] = useState<House>({ name: "", style: "", season: "", price: "", restrictions: "" });
-  const [team, setTeam] = useState<Member[]>([]);
-  const [users, setUsers] = useState<AppUser[]>([]);
-  const [me, setMe] = useState<{ accessLevel: string } | null>(null);
   const [newName, setNewName] = useState("");
   const [newRole, setNewRole] = useState<(typeof CARD_ROLES)[number]>("contributor");
   const houseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    fetch("/api/restaurant").then((r) => r.json()).then(setHouse);
-    fetch("/api/profile").then((r) => r.json()).then(setMe);
-    fetch("/api/team").then((r) => r.json()).then(setTeam);
-    fetch("/api/team/users").then((r) => r.ok ? r.json() : []).then(setUsers);
+    fetch("/api/restaurant").then((r) => r.json()).then(setHouse).catch(() => {});
   }, []);
 
   function setHouseField<K extends keyof House>(k: K, v: House[K]) {
@@ -47,42 +51,27 @@ export default function CasaPage() {
 
   async function addMember() {
     if (!newName.trim()) return;
-    const m = await fetch("/api/team", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: newName.trim(), role: newRole }),
-    }).then((r) => r.json());
-    setTeam((l) => [...l, m]);
+    createTeamMutation.mutate({ name: newName.trim(), role: newRole });
     setNewName("");
     toast(t("toast-team-added"));
   }
 
   async function changeCardRole(id: string, role: string) {
-    setTeam((l) => l.map((m) => (m.id === id ? { ...m, role } : m)));
-    await fetch(`/api/team/${id}`, {
-      method: "PUT", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ role }),
-    });
+    updateTeamMutation.mutate({ id, data: { role: role as "admin" | "editor" | "contributor" | "viewer" } });
   }
 
   async function removeMember(id: string) {
-    setTeam((l) => l.filter((m) => m.id !== id));
-    await fetch(`/api/team/${id}`, { method: "DELETE" });
+    deleteTeamMutation.mutate(id);
   }
 
   async function changeUserAccess(id: string, accessLevel: string) {
-    setUsers((l) => l.map((u) => (u.id === id ? { ...u, accessLevel } : u)));
-    const res = await fetch(`/api/team/users/${id}`, {
-      method: "PUT", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ accessLevel }),
-    });
-    if (res.ok) toast(t("toast-saved"));
+    updateUserMutation.mutate({ id, data: { accessLevel: accessLevel as "admin" | "editor" | "viewer" } });
+    toast(t("toast-saved"));
   }
 
   async function revokeAccess(id: string) {
     if (!confirm("Bajar a 'viewer'? La persona ya no podrá editar.")) return;
-    await fetch(`/api/team/users/${id}`, { method: "DELETE" });
-    setUsers((l) => l.map((u) => (u.id === id ? { ...u, accessLevel: "viewer" } : u)));
+    deleteUserMutation.mutate(id);
     toast(t("toast-saved"));
   }
 
@@ -133,7 +122,7 @@ export default function CasaPage() {
                 {users.map((u) => (
                   <div key={u.id} className="team-row">
                     <div className="av">
-                      {u.photoUrl ? <img src={u.photoUrl} alt="" /> : (u.initials || initialsFrom(u.name))}
+                      {u.photoUrl ? <Image src={u.photoUrl} alt="User avatar" width={40} height={40} className="avatar" /> : (u.initials || initialsFrom(u.name))}
                     </div>
                     <div className="team-row-info">
                       <div className="team-row-name">{u.name}</div>

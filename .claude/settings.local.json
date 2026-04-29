@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Utente/Desktop/atelier-culinaire-app/**)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(node -e ' *)",
+      "Bash(export DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/atelier\")",
+      "Bash(npx prisma *)",
+      "Bash(npx next *)",
+      "Bash(git remote *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useLang } from "./LangProvider";
 import { useToast } from "./Toast";
@@ -156,7 +157,7 @@ export function RecipeModal({
             <div className="recipe-photos">
               {recipe.photos.map((p) => (
                 <div key={p.id} style={{ position: "relative" }}>
-                  <img src={p.url} alt="" />
+                  <Image src={p.url} alt="Recipe photo" width={200} height={200} className="recipe-photo" />
                   <button
                     className="btn-icon"
                     style={{ position: "absolute", top: 4, right: 4, background: "rgba(255,255,255,.85)" }}

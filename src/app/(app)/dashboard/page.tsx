@@ -1,44 +1,36 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLang } from "@/components/LangProvider";
 import { useToast } from "@/components/Toast";
 import { Ico } from "@/components/icons";
 import { formatDate, formatLongDate } from "@/lib/utils";
+import { useIdeas, useCreateIdea, useDeleteIdea, useRecipes, useMenus } from "@/hooks";
 
-type Idea = { id: string; text: string; createdAt: string };
+type Idea = { id: string; text: string; createdAt: Date | string };
 
 export default function DashboardPage() {
   const { t, lang } = useLang();
   const toast = useToast();
   const router = useRouter();
-  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const { data: ideas = [] } = useIdeas();
+  const { data: recipes = [] } = useRecipes();
+  const { data: menus = [] } = useMenus();
+  const createIdeaMutation = useCreateIdea();
+  const deleteIdeaMutation = useDeleteIdea();
   const [draft, setDraft] = useState("");
-  const [stats, setStats] = useState({ ideas: 0, drafts: 0, approved: 0, menus: 0 });
-
-  const loadAll = useCallback(async () => {
-    const [iRes, rRes, mRes] = await Promise.all([
-      fetch("/api/ideas").then((r) => r.json()),
-      fetch("/api/recipes").then((r) => r.json()),
-      fetch("/api/menus").then((r) => r.json()),
-    ]);
-    setIdeas(iRes);
-    setStats({
-      ideas: iRes.length,
-      drafts: rRes.filter((r: { status: string }) => r.status !== "approved").length,
-      approved: rRes.filter((r: { status: string }) => r.status === "approved").length,
-      menus: mRes.length,
-    });
-  }, []);
-
-  useEffect(() => {
-    loadAll();
-  }, [loadAll]);
 
   const greeting = useMemo(() => {
     const h = new Date().getHours();
     return h < 12 ? t("greet-morning") : h < 19 ? t("greet-afternoon") : t("greet-evening");
   }, [t]);
+
+  const stats = useMemo(() => ({
+    ideas: ideas.length,
+    drafts: recipes.filter((r: { status: string }) => r.status !== "approved").length,
+    approved: recipes.filter((r: { status: string }) => r.status === "approved").length,
+    menus: menus.length,
+  }), [ideas, recipes, menus]);
 
   async function saveIdea() {
     const text = draft.trim();
@@ -46,23 +38,15 @@ export default function DashboardPage() {
       toast(t("toast-empty-idea"));
       return;
     }
-    const res = await fetch("/api/ideas", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text }),
-    });
-    if (res.ok) {
-      setDraft("");
-      toast(t("toast-idea-saved"));
-      await loadAll();
-    }
+    createIdeaMutation.mutate(text);
+    setDraft("");
+    toast(t("toast-idea-saved"));
   }
 
-  async function deleteIdea(id: string) {
+  async function deleteIdeaHandler(id: string) {
     if (!confirm(t("confirm-delete-idea"))) return;
-    await fetch(`/api/ideas/${id}`, { method: "DELETE" });
+    deleteIdeaMutation.mutate(id);
     toast(t("toast-idea-deleted"));
-    loadAll();
   }
 
   function sendToChat(idea: Idea) {
@@ -150,7 +134,7 @@ export default function DashboardPage() {
                 <button className="btn-icon" title={t("idea-send")} onClick={() => sendToChat(i)}>
                   <Ico.send />
                 </button>
-                <button className="btn-icon" title={t("idea-delete")} onClick={() => deleteIdea(i.id)}>
+                <button className="btn-icon" title={t("idea-delete")} onClick={() => deleteIdeaHandler(i.id)}>
                   <Ico.trash />
                 </button>
               </div>

@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLang } from "@/components/LangProvider";
 import { Ico } from "@/components/icons";
+import { usePantry, useCreatePantryItem, useUpdatePantryItem, useDeletePantryItem } from "@/hooks";
 
 type PantryCat = "verduras" | "pescados" | "carnes" | "secos" | "lacteos";
 type Season = "spring" | "summer" | "autumn" | "winter" | "allyear";
@@ -15,36 +16,22 @@ const SEASONS: Season[] = ["allyear", "spring", "summer", "autumn", "winter"];
 
 export default function PantryPage() {
   const { t } = useLang();
-  const [list, setList] = useState<Item[]>([]);
+  const { data: list = [] } = usePantry();
+  const createMutation = useCreatePantryItem();
+  const updateMutation = useUpdatePantryItem();
+  const deleteMutation = useDeletePantryItem();
   const [filter, setFilter] = useState<PantryCat | "all">("all");
 
-  async function load() {
-    const l = await fetch("/api/pantry").then((r) => r.json());
-    setList(l);
-  }
-  useEffect(() => { load(); }, []);
-
   async function add() {
-    const it = await fetch("/api/pantry", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "Nuovo ingrediente", category: "verduras", cost: 0, season: "allyear" }),
-    }).then((r) => r.json());
-    setList((l) => [it, ...l]);
+    createMutation.mutate({ name: "Nuovo ingrediente", category: "verduras", cost: 0, season: "allyear", supplier: "", stock: "" });
   }
 
   async function patch(id: string, field: keyof Item, value: string | number) {
-    setList((l) => l.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
-    await fetch(`/api/pantry/${id}`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ [field]: value }),
-    });
+    updateMutation.mutate({ id, data: { [field]: value } });
   }
 
   async function remove(id: string) {
-    setList((l) => l.filter((x) => x.id !== id));
-    await fetch(`/api/pantry/${id}`, { method: "DELETE" });
+    deleteMutation.mutate(id);
   }
 
   const filtered = filter === "all" ? list : list.filter((x) => x.category === filter);
