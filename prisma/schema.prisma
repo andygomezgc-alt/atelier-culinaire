@@ -92,23 +92,68 @@ model Idea {
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
 }
 
+// ---------- Ingredients ----------
+model Ingredient {
+  id        String   @id @default(cuid())
+  name      String
+  unit      String   @default("kg")    // base unit for cost calculation
+  category  String   @default("otros") // verduras | pescados | carnes | secos | lacteos | otros
+
+  // 14 EU allergens (Regulation EU 1169/2011)
+  hasGluten      Boolean @default(false)
+  hasCrustaceans Boolean @default(false)
+  hasEggs        Boolean @default(false)
+  hasFish        Boolean @default(false)
+  hasPeanuts     Boolean @default(false)
+  hasSoy         Boolean @default(false)
+  hasMilk        Boolean @default(false)
+  hasNuts        Boolean @default(false)
+  hasCelery      Boolean @default(false)
+  hasMustard     Boolean @default(false)
+  hasSesame      Boolean @default(false)
+  hasSulphites   Boolean @default(false)
+  hasLupin       Boolean @default(false)
+  hasMolluscs    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  recipeIngredients RecipeIngredient[]
+  pantryItems       PantryItem[]
+}
+
+model RecipeIngredient {
+  id           String     @id @default(cuid())
+  recipeId     String
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  quantity     Float      @default(0)
+  unit         String     @default("kg")  // can differ from ingredient.unit
+  note         String     @default("")    // optional chef note
+
+  @@unique([recipeId, ingredientId])
+}
+
 // ---------- Recipes ----------
 model Recipe {
-  id         String          @id @default(cuid())
-  name       String
-  category   String          @default("")
-  status     String          @default("draft") // draft | testing | approved
-  priority   Boolean         @default(false)
-  summary    String          @default("")
-  content    String          @default("")
-  ingredients String         @default("") // freeform
-  technique  String          @default("")
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
-  authorId   String
-  author     User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  versions   RecipeVersion[]
-  photos     RecipePhoto[]
+  id            String             @id @default(cuid())
+  name          String
+  category      String             @default("")
+  status        String             @default("draft") // draft | testing | approved
+  priority      Boolean            @default(false)
+  summary       String             @default("")
+  content       String             @default("")
+  ingredients   String             @default("") // freeform (legacy)
+  technique     String             @default("")
+  yieldPortions Int?               // number of portions this recipe yields
+  yieldGrams    Float?             // total grams this recipe yields
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  authorId      String
+  author        User               @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  versions      RecipeVersion[]
+  photos        RecipePhoto[]
+  recipeIngredients RecipeIngredient[]
 }
 
 model RecipeVersion {
@@ -160,14 +205,17 @@ model MenuDish {
 
 // ---------- Pantry ----------
 model PantryItem {
-  id        String   @id @default(cuid())
-  name      String
-  category  String   @default("verduras") // verduras | pescados | carnes | secos | lacteos
-  cost      Float    @default(0)
-  season    String   @default("allyear")  // spring | summer | autumn | winter | allyear
-  supplier  String   @default("")
-  stock     String   @default("")
-  createdAt DateTime @default(now())
+  id           String      @id @default(cuid())
+  name         String
+  category     String      @default("verduras") // verduras | pescados | carnes | secos | lacteos
+  cost         Float       @default(0)
+  season       String      @default("allyear")  // spring | summer | autumn | winter | allyear
+  supplier     String      @default("")
+  stock        String      @default("")
+  ingredientId String?
+  ingredient   Ingredient? @relation(fields: [ingredientId], references: [id])
+  costUnit     String      @default("kg")  // unit for the cost field
+  createdAt    DateTime    @default(now())
 }
 
 // ---------- Chat ----------

@@ -5,6 +5,8 @@ import { useLang } from "./LangProvider";
 import { useToast } from "./Toast";
 import { Ico } from "./icons";
 import { formatDate, renderMd } from "@/lib/utils";
+import { IngredientPicker } from "./IngredientPicker";
+import { RecipeCostingPanel } from "./RecipeCostingPanel";
 
 export type RecipeVersion = { id: string; v: number; tester: string; note: string; createdAt: string };
 export type RecipePhoto = { id: string; url: string };
@@ -151,6 +153,16 @@ export function RecipeModal({
           ) : (
             <div className="recipe-prose" dangerouslySetInnerHTML={{ __html: renderMd(recipe.content || recipe.summary || "") }} />
           )}
+
+          {/* Ingredients section — always visible */}
+          <div style={{ marginTop: 18 }}>
+            <IngredientPicker recipeId={recipe.id} />
+          </div>
+
+          {/* Costing panel */}
+          <div style={{ marginTop: 18 }}>
+            <RecipeCostingPanel recipeId={recipe.id} />
+          </div>
 
           <div style={{ marginTop: 18 }}>
             <div className="versions-h" style={{ marginBottom: 8 }}>{t("r-photos")}</div>

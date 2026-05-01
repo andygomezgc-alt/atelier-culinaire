@@ -1,10 +1,19 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLang } from "@/components/LangProvider";
 import { useToast } from "@/components/Toast";
 import { Ico } from "@/components/icons";
 import { formatDate, formatLongDate, shortText, escapeHtml } from "@/lib/utils";
 import { useMenus, useCreateMenu, useUpdateMenu, useDeleteMenu, useRecipes } from "@/hooks";
+import type { AllergenKey } from "@/lib/costing";
+
+const ALLERGEN_EMOJI: Record<AllergenKey, string> = {
+  hasGluten: "🌾", hasCrustaceans: "🦐", hasEggs: "🥚", hasFish: "🐟",
+  hasPeanuts: "🥜", hasSoy: "🫘", hasMilk: "🥛", hasNuts: "🌰",
+  hasCelery: "🌿", hasMustard: "🟡", hasSesame: "✳️", hasSulphites: "🍷",
+  hasLupin: "🫛", hasMolluscs: "🦪",
+};
 
 type Dish = { id: string; recipeId: string | null; name: string; price: number; order: number };
 type Cat = { id: string; name: string; order: number; dishes: Dish[] };
@@ -37,6 +46,21 @@ export default function MenusPage() {
   }, []);
 
   const active = menus.find((m) => m.id === activeId);
+
+  const activeRecipeIds = useMemo(() => {
+    if (!active) return [];
+    return [...new Set(active.categories.flatMap((c) => c.dishes.map((d) => d.recipeId).filter(Boolean)))] as string[];
+  }, [active]);
+
+  const { data: dishAllergens = {} } = useQuery<Record<string, AllergenKey[]>>({
+    queryKey: ["dishAllergens", activeRecipeIds],
+    queryFn: async () => {
+      if (!activeRecipeIds.length) return {};
+      const res = await fetch(`/api/recipes/allergens?ids=${activeRecipeIds.join(",")}`);
+      return res.json();
+    },
+    enabled: activeRecipeIds.length > 0,
+  });
 
   async function newMenu() {
     const name = prompt(t("prompt-menu-name"), "Menú Otoño 2026");
@@ -181,16 +205,21 @@ export default function MenusPage() {
       .kitchen .dish .meta{ font-family: sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: #8b7a6f; margin-bottom: 6px; }
       .kitchen .dish .body{ font-family: serif; font-size: 13px; line-height: 1.55; white-space: pre-wrap; }
       .footer{ margin-top: 40px; text-align: center; font-style: italic; font-size: 11px; color: #8b7a6f; }
+      .allergens{ font-size: 13px; margin-top: 3px; color: #8b7a6f; }
+      .kitchen .allergens{ font-size: 12px; margin: 4px 0; }
     `;
     const renderClient = active.categories.map((c) => `
       <div class="cat-h">${escapeHtml(c.name)}</div>
       ${c.dishes.map((d) => {
         const r = d.recipeId ? recipes.find((x) => x.id === d.recipeId) : null;
         const desc = r?.summary || "";
+        const allergens = d.recipeId ? (dishAllergens[d.recipeId] ?? []) : [];
+        const allergenEmojis = allergens.map((k) => ALLERGEN_EMOJI[k]).join(" ");
         return `<div class="dish">
           <div class="n">${escapeHtml(d.name)}</div>
           ${desc ? `<div class="d">${escapeHtml(shortText(desc, 140))}</div>` : ""}
           <div class="p">${d.price ? d.price + " €" : ""}</div>
+          ${allergenEmojis ? `<div class="allergens">${allergenEmojis}</div>` : ""}
         </div>`;
       }).join("")}
     `).join("");
@@ -200,9 +229,12 @@ export default function MenusPage() {
         const r = d.recipeId ? recipes.find((x) => x.id === d.recipeId) : null;
         const meta = r ? `${escapeHtml(r.category)} · ${r.status}` : "—";
         const cnt = r ? (r.content || r.summary || "") : "";
+        const allergens = d.recipeId ? (dishAllergens[d.recipeId] ?? []) : [];
+        const allergenEmojis = allergens.map((k) => ALLERGEN_EMOJI[k]).join(" ");
         return `<div class="dish">
           <div class="n"><span>${escapeHtml(d.name)}</span><span class="p">${d.price ? d.price + " €" : ""}</span></div>
           <div class="meta">${meta}</div>
+          ${allergenEmojis ? `<div class="allergens">Alérgenos: ${allergenEmojis}</div>` : ""}
           <div class="body">${escapeHtml(cnt)}</div>
         </div>`;
       }).join("")}
@@ -292,35 +324,49 @@ export default function MenusPage() {
                       </button>
                     </div>
                     <div className="menu-dishes">
-                      {c.dishes.map((d) => (
-                        <div
-                          key={d.id}
-                          className="menu-dish"
-                          draggable
-                          onDragStart={() => onDragStart(c.id, d.id)}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => onDrop(c.id, d.id)}
-                        >
-                          <div className="grip">⋮⋮</div>
-                          <input
-                            className="name"
-                            style={{ background: "transparent", border: "1px solid transparent", padding: "2px 4px", borderRadius: 3 }}
-                            value={d.name}
-                            onChange={(e) => patchDish(d.id, { name: e.target.value })}
-                          />
-                          <input
-                            className="price"
-                            type="number"
-                            step="0.5"
-                            min="0"
-                            value={d.price || ""}
-                            onChange={(e) => patchDish(d.id, { price: parseFloat(e.target.value) || 0 })}
-                          />
-                          <button className="btn-icon" onClick={() => deleteDish(c.id, d.id)}>
-                            <Ico.close />
-                          </button>
-                        </div>
-                      ))}
+                      {c.dishes.map((d) => {
+                        const allergens = d.recipeId ? (dishAllergens[d.recipeId] ?? []) : [];
+                        return (
+                          <div
+                            key={d.id}
+                            className="menu-dish"
+                            draggable
+                            onDragStart={() => onDragStart(c.id, d.id)}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={() => onDrop(c.id, d.id)}
+                          >
+                            <div className="grip">⋮⋮</div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <input
+                                className="name"
+                                style={{ background: "transparent", border: "1px solid transparent", padding: "2px 4px", borderRadius: 3, width: "100%" }}
+                                value={d.name}
+                                onChange={(e) => patchDish(d.id, { name: e.target.value })}
+                              />
+                              {allergens.length > 0 && (
+                                <div style={{ display: "flex", gap: 2, flexWrap: "wrap", marginTop: 2, paddingLeft: 4 }}>
+                                  {allergens.map((key) => (
+                                    <span key={key} title={key.replace("has", "")} style={{ fontSize: 12 }}>
+                                      {ALLERGEN_EMOJI[key]}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <input
+                              className="price"
+                              type="number"
+                              step="0.5"
+                              min="0"
+                              value={d.price || ""}
+                              onChange={(e) => patchDish(d.id, { price: parseFloat(e.target.value) || 0 })}
+                            />
+                            <button className="btn-icon" onClick={() => deleteDish(c.id, d.id)}>
+                              <Ico.close />
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                     <div className="add-dish-row">
                       <select

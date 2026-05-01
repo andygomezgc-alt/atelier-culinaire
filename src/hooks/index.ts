@@ -43,6 +43,16 @@ export {
 } from './useProfile'
 
 export {
+  useIngredients,
+  useCreateIngredient,
+  useUpdateIngredient,
+  useRecipeIngredients,
+  useAddRecipeIngredient,
+  useUpdateRecipeIngredient,
+  useRemoveRecipeIngredient,
+} from './useIngredients'
+
+export {
   useTeam,
   useCreateTeamMember,
   useUpdateTeamMember,
