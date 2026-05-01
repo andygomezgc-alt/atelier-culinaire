@@ -38,11 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const theme = isTheme(stored) ? stored : "light";
 
   return (
-    <html
-      lang="es"
-      data-theme={theme}
-      className={`${serif.variable} ${sans.variable} ${mono.variable}`}
-    >
+    <html data-theme={theme} className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <body>
         <Providers>{children}</Providers>
       </body>
