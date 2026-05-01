@@ -1,30 +1,38 @@
-/* Sidebar styles */
-#app {
-  display: flex;
-  min-height: 100vh;
-}
+/* =====================================================================
+   Atelier Culinaire — Layout CSS (Fase 1)
+   Sidebar, topbar, main content area, and mobile responsive layout.
+   ===================================================================== */
 
 .sidebar {
-  width: 200px;
-  background: var(--surface);
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 280px;
+  height: 100vh;
+  background: var(--bg);
   border-right: 1px solid var(--border);
-  padding: var(--s-4);
+  padding: var(--s-6);
   display: flex;
   flex-direction: column;
   gap: var(--s-6);
   overflow-y: auto;
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
+  z-index: 100;
 }
 
-.sidebar-brand {
+.sidebar-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-bottom: var(--s-6);
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header h1 {
   font-family: var(--font-serif);
-  font-style: italic;
   font-size: var(--text-h3);
-  color: var(--text);
-  margin-bottom: var(--s-4);
+  line-height: var(--lh-h3);
+  margin: 0;
+  letter-spacing: var(--tr-h3);
 }
 
 .sidebar-nav {
@@ -34,174 +42,317 @@
   flex: 1;
 }
 
-.sidebar-nav-item {
+.nav-item {
   display: flex;
   align-items: center;
-  gap: var(--s-2);
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-sm);
-  font-family: var(--font-sans);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: var(--text-caption);
-  font-weight: 500;
-  color: var(--text-secondary);
-  transition: all var(--duration-fast) var(--ease);
-  cursor: pointer;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  font-size: var(--text-sm);
+  line-height: var(--lh-sm);
   text-decoration: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--duration) var(--ease);
+  border: 1px solid transparent;
 }
 
-.sidebar-nav-item:hover {
-  background: var(--surface-2);
+.nav-item:hover {
+  background: var(--surface);
   color: var(--text);
+  border-color: var(--border);
 }
 
-.sidebar-nav-item.active {
+.nav-item.active {
   background: var(--surface-2);
   color: var(--text);
+  border-color: var(--accent);
+  font-weight: 500;
 }
 
 .sidebar-footer {
-  border-top: 1px solid var(--border);
-  padding-top: var(--s-4);
   display: flex;
   flex-direction: column;
   gap: var(--s-3);
+  padding-top: var(--s-6);
+  border-top: 1px solid var(--border);
 }
 
-.sidebar-lang {
-  display: flex;
-  justify-content: center;
-  gap: var(--s-2);
-}
-
-.sidebar-lang-btn {
-  background: transparent;
-  border: none;
-  font-family: var(--font-sans);
-  font-size: var(--text-caption);
-  color: var(--text-tertiary);
-  cursor: pointer;
-  transition: color var(--duration-fast) var(--ease);
-}
-
-.sidebar-lang-btn.active {
-  color: var(--text);
-  font-weight: 600;
-}
-
-.sidebar-lang-btn:hover {
-  color: var(--text-secondary);
-}
-
-.sidebar-logout {
-  background: transparent;
-  border: 1px solid var(--border);
-  padding: var(--s-2) var(--s-3);
-  border-radius: var(--r-sm);
-  font-family: var(--font-sans);
-  font-size: var(--text-caption);
-  color: var(--text);
-  cursor: pointer;
-  transition: all var(--duration-fast) var(--ease);
-}
-
-.sidebar-logout:hover {
-  background: var(--surface-2);
-}
-
-/* Topbar styles */
+/* ========== TOPBAR ========== */
 .topbar {
   position: fixed;
   top: 0;
-  left: 200px;
+  left: 280px;
   right: 0;
-  height: 56px;
+  height: 64px;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--s-6);
-  gap: var(--s-4);
-  z-index: 40;
+  z-index: 90;
 }
 
-.topbar-left {
+.topbar-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-h4);
+  line-height: var(--lh-h4);
+  margin: 0;
+}
+
+.topbar-actions {
   display: flex;
   align-items: center;
   gap: var(--s-4);
 }
 
-.topbar-right {
-  display: flex;
-  align-items: center;
-  gap: var(--s-3);
-}
-
-.topbar-restaurante {
-  display: flex;
-  align-items: center;
-  gap: var(--s-1);
-  font-family: var(--font-sans);
-  font-size: var(--text-body);
-  color: var(--text);
+.topbar-action {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
   cursor: pointer;
-  transition: color var(--duration-fast) var(--ease);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration) var(--ease);
 }
 
-.topbar-restaurante:hover {
-  color: var(--text-secondary);
+.topbar-action:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
 }
 
-/* Main content */
+/* ========== MAIN CONTENT ========== */
 .main {
-  margin-left: 200px;
-  margin-top: 56px;
-  flex: 1;
-  padding: var(--s-6) var(--s-8);
-  max-width: calc(100% - 200px);
-  overflow-y: auto;
+  margin-left: 280px;
+  margin-top: 64px;
+  padding: var(--s-8);
+  min-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
 }
 
-.main > * {
-  max-width: 880px;
+.main-content {
+  max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
 }
 
-/* Mobile styles */
+/* ========== MOBILE LAYOUT ========== */
 @media (max-width: 768px) {
   .sidebar {
+    position: fixed;
+    left: 0;
+    top: 64px;
+    width: 100%;
+    height: calc(100vh - 64px);
+    border-right: none;
+    border-top: 1px solid var(--border);
+    padding: var(--s-6);
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--s-4);
+    overflow-y: auto;
+    z-index: 80;
     display: none;
+  }
+
+  .sidebar.active {
+    display: flex;
+  }
+
+  .sidebar-header {
+    display: none;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+    width: 100%;
+    flex: none;
+  }
+
+  .nav-item {
+    flex: 0 0 calc(50% - var(--s-2));
+    padding: var(--s-3) var(--s-3);
   }
 
   .topbar {
     left: 0;
     padding: 0 var(--s-4);
+    height: 64px;
+  }
+
+  .topbar-title {
+    font-size: var(--text-h4);
   }
 
   .main {
     margin-left: 0;
-    margin-top: 56px;
-    padding: var(--s-4);
-    max-width: 100%;
+    margin-top: 64px;
+    padding: var(--s-6);
   }
 
-  .mobile-bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 64px;
-    background: var(--bg);
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 40;
+  .main-content {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    gap: var(--s-3);
+    padding: var(--s-4);
+  }
+
+  .sidebar-nav {
+    gap: var(--s-2);
+  }
+
+  .nav-item {
+    flex: 0 0 calc(50% - var(--s-1));
+    padding: var(--s-2) var(--s-3);
+    font-size: var(--text-micro);
+  }
+
+  .topbar {
+    padding: 0 var(--s-3);
+    height: 56px;
+  }
+
+  .topbar-title {
+    font-size: var(--text-sm);
   }
 
   .main {
-    margin-bottom: 64px;
+    padding: var(--s-4);
+  }
+}
+
+/* ========== UTILITY CLASSES ========== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-5);
+  border-radius: var(--r-md);
+  font-size: var(--text-sm);
+  line-height: var(--lh-sm);
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--duration) var(--ease);
+}
+
+.btn:hover {
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+
+.btn-primary {
+  background: var(--invert);
+  color: var(--invert-text);
+  border-color: var(--invert);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.btn-accent:hover {
+  opacity: 0.9;
+}
+
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--s-6);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  padding: var(--s-8);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--bg);
+}
+
+.chef-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-6);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  transition: all var(--duration) var(--ease);
+}
+
+.chef-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+
+.chef-card-title {
+  font-family: var(--font-serif);
+  font-size: var(--text-h4);
+  line-height: var(--lh-h4);
+  margin: 0;
+}
+
+.chef-card-text {
+  font-size: var(--text-sm);
+  line-height: var(--lh-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ========== MOBILE TOPBAR ========== */
+.mobile-topbar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--s-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobile-topbar-title {
+    font-family: var(--font-serif);
+    font-size: var(--text-h4);
+    margin: 0;
+  }
+
+  .mobile-menu-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--r-md);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
