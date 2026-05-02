@@ -24,12 +24,12 @@ export function Topbar({
   const router = useRouter();
 
   return (
-    <div className="topbar">
-      <div className="topbar-left">
+    <div className="fixed top-0 left-0 right-0 md:left-[200px] h-14 bg-bg border-b border-border flex items-center justify-between px-s-5 z-[40]">
+      <div className="flex items-center gap-s-3">
         <RestaurantSwitcher current={{ id: restaurantId, name: restaurantName }} />
       </div>
 
-      <div className="topbar-right">
+      <div className="flex items-center gap-s-3">
         {/* Cmd-K search button */}
         <button
           type="button"

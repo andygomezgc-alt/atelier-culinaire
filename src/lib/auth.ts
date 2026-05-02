@@ -38,9 +38,19 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+  pages: { signIn: "/es/login" },
   providers,
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) {
+        if (!url.match(/^\/(es|it|fr|en)\//)) {
+          return `${baseUrl}/es${url}`;
+        }
+        return `${baseUrl}${url}`;
+      }
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
+    },
     async signIn({ user, account }) {
       // For Google sign-in, ensure a User row exists with our defaults.
       if (account?.provider === "google" && user.email) {

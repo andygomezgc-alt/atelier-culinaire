@@ -18,7 +18,6 @@ const ALLERGEN_EMOJI: Record<AllergenKey, string> = {
 type Dish = { id: string; recipeId: string | null; name: string; price: number; order: number };
 type Cat = { id: string; name: string; order: number; dishes: Dish[] };
 type Menu = { id: string; name: string; template: "elegante" | "moderna" | "rustica"; createdAt: string; categories: Cat[] };
-type RecipeLite = { id: string; name: string; status: string; summary: string; content: string; category: string };
 
 export default function MenusPage() {
   const { t, lang } = useLang();
@@ -173,7 +172,6 @@ export default function MenusPage() {
     setMenus((l) => l.map((m) => m.id === active.id ? {
       ...m, categories: m.categories.map((cc) => cc.id === catId ? { ...cc, dishes: newDishes } : cc),
     } : m));
-    // Persist new order
     await Promise.all(newDishes.map((d, i) =>
       fetch(`/api/menus/${active.id}/dishes/${d.id}`, {
         method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ order: i }),

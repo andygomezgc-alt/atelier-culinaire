@@ -31,7 +31,6 @@ export default function ProfilePage() {
   const photoInput = useRef<HTMLInputElement>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // password change
   const [curPwd, setCurPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [pwdMsg, setPwdMsg] = useState("");

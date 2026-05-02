@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLang } from "@/components/LangProvider";
 import { useToast } from "@/components/Toast";
 import { Ico } from "@/components/icons";
