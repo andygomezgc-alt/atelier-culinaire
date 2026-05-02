@@ -23,6 +23,11 @@
   "recipe-save-btn": "GUARDAR COMO RECETA →",
   "recipe-saved-btn": "Guardada ✓",
   "recipe-saved-toast": "Guardada como borrador",
-  "recipe-composition": "Composition",
-  "recipe-method": "Method"
+  "recipe-composition": "Composición",
+  "recipe-method": "Método",
+  "chat-send": "Enviar",
+  "relative-mins": "hace {count}m",
+  "relative-hrs": "hace {count}h",
+  "relative-days": "hace {count}d",
+  "relative-yesterday": "ayer"
 }

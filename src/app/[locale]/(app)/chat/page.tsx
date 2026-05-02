@@ -25,7 +25,7 @@ function ChatInner() {
   const [convId, setConvId] = useState<string | null>(null);
   const [thinking, setThinking] = useState(false);
   const [input, setInput] = useState("");
-  const [savedRecipes, setSavedRecipes] = useState<Set<number>>(new Set());
+  const [savedRecipes, setSavedRecipes] = useState<Set<string>>(new Set());
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const sentRef = useRef(false);
@@ -87,20 +87,24 @@ function ChatInner() {
     sendMessage(input.trim());
   }
 
-  async function handleSaveRecipe(recipe: RecipeData, msgIndex: number) {
-    const res = await fetch("/api/recipes", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        name: recipe.title,
-        ingredients: recipe.composition,
-        content: recipe.method.join("\n"),
-        status: "draft",
-      }),
-    });
-    if (res.ok) {
-      setSavedRecipes((s) => new Set(s).add(msgIndex));
+  async function handleSaveRecipe(recipe: RecipeData, msgId: string) {
+    try {
+      const res = await fetch("/api/recipes", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: recipe.title,
+          ingredients: recipe.composition,
+          content: recipe.method.join("\n"),
+          status: "draft",
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setSavedRecipes((s) => new Set(s).add(msgId));
       toast(t("recipe-saved-toast"));
+    } catch (e) {
+      const err = e as { message?: string };
+      toast(`Error: ${err.message ?? "unknown"}`);
     }
   }
 
@@ -109,7 +113,7 @@ function ChatInner() {
       <div className="px-s-6 py-s-4 border-b border-border shrink-0">
         <h2 className="font-sans text-h2 text-text">{t("chat-title")}</h2>
         {ideaParam && (
-          <p className="font-serif italic text-sm text-text-secondary mt-s-1">
+          <p className="font-serif italic text-caption text-text-secondary mt-s-1">
             {t("chat-about")} &ldquo;{ideaParam}&rdquo;
           </p>
         )}
@@ -141,8 +145,8 @@ function ChatInner() {
               {recipe && (
                 <RecipeCard
                   data={recipe}
-                  onSave={() => handleSaveRecipe(recipe, i)}
-                  saved={savedRecipes.has(i)}
+                  onSave={() => handleSaveRecipe(recipe, msg.id ?? String(i))}
+                  saved={savedRecipes.has(msg.id ?? String(i))}
                 />
               )}
             </div>
@@ -180,6 +184,7 @@ function ChatInner() {
             type="button"
             onClick={handleSend}
             disabled={thinking || !input.trim()}
+            aria-label={t("chat-send")}
             className="px-s-4 py-s-3 bg-invert text-invert-text font-sans text-caption uppercase tracking-[0.1em] rounded-sm disabled:opacity-40 transition-opacity"
           >
             →

@@ -24,5 +24,10 @@
   "recipe-saved-btn": "Enregistrée ✓",
   "recipe-saved-toast": "Enregistrée comme brouillon",
   "recipe-composition": "Composition",
-  "recipe-method": "Méthode"
+  "recipe-method": "Méthode",
+  "chat-send": "Envoyer",
+  "relative-mins": "il y a {count}min",
+  "relative-hrs": "il y a {count}h",
+  "relative-days": "il y a {count}j",
+  "relative-yesterday": "hier"
 }

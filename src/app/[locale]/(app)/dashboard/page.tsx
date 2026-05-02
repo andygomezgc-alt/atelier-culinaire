@@ -5,19 +5,20 @@ import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
 import { useIdeas, useCreateIdea } from "@/hooks";
 import { Button, Textarea } from "@/components/ui";
+import type { Idea } from "@prisma/client";
 import type { Locale } from "@/i18n.config";
 
-type Idea = { id: string; text: string; createdAt: Date | string; authorId: string };
+type TranslateFn = (key: string, values?: Record<string, number>) => string;
 
-function formatRelative(date: Date | string): string {
+function formatRelative(date: Date | string, t: TranslateFn): string {
   const ms = Date.now() - new Date(date).getTime();
   const mins = Math.floor(ms / 60000);
-  if (mins < 60) return `hace ${mins}m`;
+  if (mins < 60) return t("relative-mins", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `hace ${hrs}h`;
+  if (hrs < 24) return t("relative-hrs", { count: hrs });
   const days = Math.floor(hrs / 24);
-  if (days === 1) return "ayer";
-  return `hace ${days}d`;
+  if (days === 1) return t("relative-yesterday");
+  return t("relative-days", { count: days });
 }
 
 function formatDate(locale: string): string {
@@ -45,7 +46,7 @@ export default function InicioPage() {
     setDraft("");
   }
 
-  function handleIdeaClick(idea: Idea) {
+  function handleIdeaClick(idea: Pick<Idea, "text">) {
     router.push(`/${locale}/chat?idea=${encodeURIComponent(idea.text)}`);
   }
 
@@ -98,7 +99,7 @@ export default function InicioPage() {
                       &ldquo;{idea.text}&rdquo;
                     </span>
                     <span className="font-mono text-micro text-text-tertiary ml-s-3 shrink-0">
-                      {formatRelative(idea.createdAt)}
+                      {formatRelative(idea.createdAt, t as TranslateFn)}
                     </span>
                   </button>
                 </li>

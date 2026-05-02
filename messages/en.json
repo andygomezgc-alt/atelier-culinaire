@@ -24,5 +24,10 @@
   "recipe-saved-btn": "Saved ✓",
   "recipe-saved-toast": "Saved as draft",
   "recipe-composition": "Composition",
-  "recipe-method": "Method"
+  "recipe-method": "Method",
+  "chat-send": "Send",
+  "relative-mins": "{count}m ago",
+  "relative-hrs": "{count}h ago",
+  "relative-days": "{count}d ago",
+  "relative-yesterday": "yesterday"
 }
