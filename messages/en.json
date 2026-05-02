@@ -1,6 +1,28 @@
 {
   "common": {
     "title": "Atelier Culinaire",
-    "description": "Recipe and menu manager"
-  }
+    "description": "The chef's notebook."
+  },
+  "nav-inicio": "Home",
+  "nav-asistente": "Assistant",
+  "nav-recetas": "Recipes",
+  "nav-menus": "Menus",
+  "nav-despensa": "Pantry",
+  "nav-perfil": "Profile",
+  "nav-casa": "The house",
+  "nav-logout": "Sign out",
+  "inicio-title": "Home",
+  "idea-placeholder": "Note an idea…",
+  "idea-save": "SAVE",
+  "ideas-recent": "Recent ideas",
+  "ideas-empty": "No ideas yet.",
+  "chat-title": "Assistant",
+  "chat-about": "About:",
+  "chat-placeholder": "Keep the conversation going…",
+  "chat-thinking": "thinking…",
+  "recipe-save-btn": "SAVE AS RECIPE →",
+  "recipe-saved-btn": "Saved ✓",
+  "recipe-saved-toast": "Saved as draft",
+  "recipe-composition": "Composition",
+  "recipe-method": "Method"
 }

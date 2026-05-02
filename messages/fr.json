@@ -1,6 +1,28 @@
 {
   "common": {
     "title": "Atelier Culinaire",
-    "description": "Gestionnaire de recettes et de menus"
-  }
+    "description": "Le carnet du chef."
+  },
+  "nav-inicio": "Accueil",
+  "nav-asistente": "Assistant",
+  "nav-recetas": "Recettes",
+  "nav-menus": "Menus",
+  "nav-despensa": "Garde-manger",
+  "nav-perfil": "Profil",
+  "nav-casa": "La maison",
+  "nav-logout": "Se déconnecter",
+  "inicio-title": "Accueil",
+  "idea-placeholder": "Notez une idée…",
+  "idea-save": "ENREGISTRER",
+  "ideas-recent": "Idées récentes",
+  "ideas-empty": "Pas encore d'idées.",
+  "chat-title": "Assistant",
+  "chat-about": "À propos de :",
+  "chat-placeholder": "Continuez la conversation…",
+  "chat-thinking": "en train de réfléchir…",
+  "recipe-save-btn": "ENREGISTRER COMME RECETTE →",
+  "recipe-saved-btn": "Enregistrée ✓",
+  "recipe-saved-toast": "Enregistrée comme brouillon",
+  "recipe-composition": "Composition",
+  "recipe-method": "Méthode"
 }

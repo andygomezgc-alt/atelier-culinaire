@@ -1,6 +1,28 @@
 {
   "common": {
     "title": "Atelier Culinaire",
-    "description": "Gestor de recetas y menús"
-  }
+    "description": "El cuaderno del chef."
+  },
+  "nav-inicio": "Inicio",
+  "nav-asistente": "Asistente",
+  "nav-recetas": "Recetas",
+  "nav-menus": "Menús",
+  "nav-despensa": "Despensa",
+  "nav-perfil": "Perfil",
+  "nav-casa": "La casa",
+  "nav-logout": "Salir",
+  "inicio-title": "Inicio",
+  "idea-placeholder": "Anotá una idea…",
+  "idea-save": "GUARDAR",
+  "ideas-recent": "Ideas recientes",
+  "ideas-empty": "Todavía no hay ideas.",
+  "chat-title": "Asistente",
+  "chat-about": "Sobre:",
+  "chat-placeholder": "Seguí conversando…",
+  "chat-thinking": "pensando…",
+  "recipe-save-btn": "GUARDAR COMO RECETA →",
+  "recipe-saved-btn": "Guardada ✓",
+  "recipe-saved-toast": "Guardada como borrador",
+  "recipe-composition": "Composition",
+  "recipe-method": "Method"
 }
