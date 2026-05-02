@@ -1,147 +1,112 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLang } from "@/components/LangProvider";
-import { useToast } from "@/components/Toast";
-import { Ico } from "@/components/icons";
-import { formatDate, formatLongDate } from "@/lib/utils";
-import { useIdeas, useCreateIdea, useDeleteIdea, useRecipes, useMenus } from "@/hooks";
+import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
+import { useIdeas, useCreateIdea } from "@/hooks";
+import { Button, Textarea } from "@/components/ui";
+import type { Locale } from "@/i18n.config";
 
-type Idea = { id: string; text: string; createdAt: Date | string };
+type Idea = { id: string; text: string; createdAt: Date | string; authorId: string };
 
-export default function DashboardPage() {
-  const { t, lang } = useLang();
-  const toast = useToast();
+function formatRelative(date: Date | string): string {
+  const ms = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return `hace ${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `hace ${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return "ayer";
+  return `hace ${days}d`;
+}
+
+function formatDate(locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
+}
+
+export default function InicioPage() {
+  const t = useTranslations();
+  const locale = useLocale() as Locale;
   const router = useRouter();
-  const { data: ideas = [] } = useIdeas();
-  const { data: recipes = [] } = useRecipes();
-  const { data: menus = [] } = useMenus();
-  const createIdeaMutation = useCreateIdea();
-  const deleteIdeaMutation = useDeleteIdea();
   const [draft, setDraft] = useState("");
 
-  const greeting = useMemo(() => {
-    const h = new Date().getHours();
-    return h < 12 ? t("greet-morning") : h < 19 ? t("greet-afternoon") : t("greet-evening");
-  }, [t]);
+  const { data: ideas = [] } = useIdeas();
+  const createIdea = useCreateIdea();
 
-  const stats = useMemo(() => ({
-    ideas: ideas.length,
-    drafts: recipes.filter((r: { status: string }) => r.status !== "approved").length,
-    approved: recipes.filter((r: { status: string }) => r.status === "approved").length,
-    menus: menus.length,
-  }), [ideas, recipes, menus]);
-
-  async function saveIdea() {
+  function handleSave() {
     const text = draft.trim();
-    if (!text) {
-      toast(t("toast-empty-idea"));
-      return;
-    }
-    createIdeaMutation.mutate(text);
+    if (!text) return;
+    createIdea.mutate(text);
     setDraft("");
-    toast(t("toast-idea-saved"));
   }
 
-  async function deleteIdeaHandler(id: string) {
-    if (!confirm(t("confirm-delete-idea"))) return;
-    deleteIdeaMutation.mutate(id);
-    toast(t("toast-idea-deleted"));
-  }
-
-  function sendToChat(idea: Idea) {
-    const prompt = `${t("idea-prompt-prefix")}\n\n"${idea.text}"`;
-    sessionStorage.setItem("chat:prefill", prompt);
-    router.push("/chat");
+  function handleIdeaClick(idea: Idea) {
+    router.push(`/${locale}/chat?idea=${encodeURIComponent(idea.text)}`);
   }
 
   return (
-    <section className="screen-inner">
-      <div className="page-eyebrow">{formatLongDate(Date.now(), lang).toUpperCase()}</div>
-      <h1 className="page-title">{greeting}</h1>
-      <p className="page-subtitle">{t("dash-subtitle")}</p>
+    <div className="px-s-6 py-s-8">
+      <h2 className="font-sans text-h2 text-text">{t("inicio-title")}</h2>
+      <p className="font-mono text-caption text-text-tertiary mt-s-1 mb-s-6">
+        {formatDate(locale)}
+      </p>
 
-      <div className="dash-nav-cards">
-        <a href="/chat" className="dash-nav-card primary">
-          <div className="dash-nav-card-icon">💬</div>
-          <div className="dash-nav-card-body">
-            <div className="dash-nav-card-title">{t("nav-chat")}</div>
-            <div className="dash-nav-card-sub">{t("dash-card-chat-sub")}</div>
-          </div>
-          <div className="dash-nav-card-badge">IA</div>
-        </a>
-        <a href="/recipes" className="dash-nav-card">
-          <div className="dash-nav-card-icon">📋</div>
-          <div className="dash-nav-card-body">
-            <div className="dash-nav-card-title">{t("nav-recipes")}</div>
-            <div className="dash-nav-card-sub">{stats.approved} {t("stat-approved")} · {stats.drafts} {t("stat-drafts")}</div>
-          </div>
-        </a>
-        <a href="/menus" className="dash-nav-card">
-          <div className="dash-nav-card-icon">🍽️</div>
-          <div className="dash-nav-card-body">
-            <div className="dash-nav-card-title">{t("nav-menus")}</div>
-            <div className="dash-nav-card-sub">{stats.menus} {t("stat-menus")}</div>
-          </div>
-        </a>
-        <a href="/pantry" className="dash-nav-card">
-          <div className="dash-nav-card-icon">🧺</div>
-          <div className="dash-nav-card-body">
-            <div className="dash-nav-card-title">{t("nav-pantry")}</div>
-            <div className="dash-nav-card-sub">{t("dash-card-pantry-sub")}</div>
-          </div>
-        </a>
-      </div>
-
-      <div className="dash-hero">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-s-8">
         <div>
-          <div className="notepad">
-            <div className="notepad-label">{t("notepad-label")}</div>
-            <textarea
-              value={draft}
-              placeholder={t("notepad-ph")}
-              onChange={(e) => setDraft(e.target.value)}
-            />
-            <div className="notepad-actions">
-              <span className="notepad-hint">{t("notepad-hint")}</span>
-              <button className="btn btn-accent" onClick={saveIdea}>
-                <Ico.arrow />
-                <span>{t("save-idea")}</span>
-              </button>
-            </div>
+          <Textarea
+            placeholder={t("idea-placeholder")}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            rows={5}
+            className="w-full"
+          />
+          <div className="flex justify-end mt-s-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSave}
+              disabled={!draft.trim() || createIdea.isPending}
+            >
+              {t("idea-save")}
+            </Button>
           </div>
         </div>
 
-        <div className="stats">
-          <div className="stat"><div className="v">{stats.ideas}</div><div className="l">{t("stat-ideas")}</div></div>
-          <div className="stat"><div className="v">{stats.drafts}</div><div className="l">{t("stat-drafts")}</div></div>
-          <div className="stat"><div className="v">{stats.approved}</div><div className="l">{t("stat-approved")}</div></div>
-          <div className="stat"><div className="v">{stats.menus}</div><div className="l">{t("stat-menus")}</div></div>
-        </div>
-      </div>
-
-      <div>
-        <h3 className="section-h">{t("ideas-h")}</h3>
-        <p className="section-sub">{t("ideas-sub")}</p>
-        <div className="ideas-list">
+        <div>
+          <p className="font-sans text-caption uppercase tracking-[0.1em] text-text-tertiary mb-s-3">
+            {t("ideas-recent")}
+          </p>
           {ideas.length === 0 ? (
-            <div className="idea-empty">{t("idea-empty")}</div>
+            <p className="font-serif italic text-caption text-text-tertiary">
+              {t("ideas-empty")}
+            </p>
           ) : (
-            ideas.map((i) => (
-              <div key={i.id} className="idea">
-                <div className="idea-text">{i.text}</div>
-                <div className="idea-meta">{formatDate(i.createdAt, lang)}</div>
-                <button className="btn-icon" title={t("idea-send")} onClick={() => sendToChat(i)}>
-                  <Ico.send />
-                </button>
-                <button className="btn-icon" title={t("idea-delete")} onClick={() => deleteIdeaHandler(i.id)}>
-                  <Ico.trash />
-                </button>
-              </div>
-            ))
+            <ul>
+              {ideas.map((idea) => (
+                <li key={idea.id}>
+                  <button
+                    type="button"
+                    onClick={() => handleIdeaClick(idea)}
+                    className="w-full flex items-baseline justify-between py-s-3 border-b border-border hover:bg-surface transition-colors duration-[120ms] text-left"
+                  >
+                    <span className="font-serif italic text-h4 text-text">
+                      &ldquo;{idea.text}&rdquo;
+                    </span>
+                    <span className="font-mono text-micro text-text-tertiary ml-s-3 shrink-0">
+                      {formatRelative(idea.createdAt)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
